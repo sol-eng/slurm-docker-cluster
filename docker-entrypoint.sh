@@ -1,10 +1,11 @@
 #!/bin/bash
-set -e
+set -ex
 
 if [ "$1" = "slurmdbd" ]
 then
     echo "---> Starting the MUNGE Authentication service (munged) ..."
-    gosu munge /usr/sbin/munged
+    #gosu munge /usr/sbin/munged
+    /etc/init.d/munge start  
 
     echo "---> Starting the Slurm Database Daemon (slurmdbd) ..."
 
@@ -18,13 +19,19 @@ then
     }
     echo "-- Database is now active ..."
 
+    chmod 0600 /etc/slurm/slurmdbd.conf
+    chown slurm /etc/slurm/slurmdbd.conf
+
     exec gosu slurm /usr/sbin/slurmdbd -Dvvv
+    #/usr/sbin/slurmdbd -Dvvv
+
 fi
 
 if [ "$1" = "slurmctld" ]
 then
     echo "---> Starting the MUNGE Authentication service (munged) ..."
-    gosu munge /usr/sbin/munged
+    #gosu munge /usr/sbin/munged
+    /etc/init.d/munge start 
 
     echo "---> Waiting for slurmdbd to become active before starting slurmctld ..."
 
@@ -36,13 +43,25 @@ then
     echo "-- slurmdbd is now active ..."
 
     echo "---> Starting the Slurm Controller Daemon (slurmctld) ..."
+
+    sed -i '/^Cache/ s/./#&/' /etc/slurm/slurm.conf           
+    sed -i '/^Fast/ s/./#&/' /etc/slurm/slurm.conf 
+    sed -i '/^AccountingStorageLoc/ s/./#&/' /etc/slurm/slurm.conf
+    grep Storage /etc/slurm/slurm.conf
     exec gosu slurm /usr/sbin/slurmctld -Dvvv
+
+    # R Studio integration 
+    sed -i "s/CALLBACKHOST/`hostname`/" /etc/rstudio/rserver.conf
+
+    systemctl restart rstudio-server
+    systemctl restart rstudio-launcher
 fi
 
 if [ "$1" = "slurmd" ]
 then
     echo "---> Starting the MUNGE Authentication service (munged) ..."
-    gosu munge /usr/sbin/munged
+    #gosu munge /usr/sbin/munged
+    /etc/init.d/munge start 
 
     echo "---> Waiting for slurmctld to become active before starting slurmd..."
 

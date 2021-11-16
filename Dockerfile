@@ -1,45 +1,76 @@
-FROM centos:7
+FROM ubuntu:20.04
 
-LABEL org.opencontainers.image.source="https://github.com/giovtorres/slurm-docker-cluster" \
+LABEL org.opencontainers.image.source="https://github.com/michaelmayer2/slurm-docker-cluster" \
       org.opencontainers.image.title="slurm-docker-cluster" \
-      org.opencontainers.image.description="Slurm Docker cluster on CentOS 7" \
+      org.opencontainers.image.description="Slurm Docker cluster on Ububtu 20.04 LTS" \
       org.label-schema.docker.cmd="docker-compose up -d" \
-      maintainer="Giovanni Torres"
+      maintainer="Michael Mayer"
 
-ARG SLURM_TAG=slurm-19-05-1-2
+ARG SLURM_TAG=slurm-20-11-8-1
 ARG GOSU_VERSION=1.11
+ARG R_VERSIONS="3.6.3 4.0.5 4.1.2"
+ARG RSWB_VERSION="2021.09.0-351.pro6"
+ARG PROXY="192.168.0.38"
+
+
+RUN if test -n $PROXY; then echo "Acquire::http { Proxy \"http://$PROXY:3142\"; };" >> /etc/apt/apt.conf.d/01proxy; fi
+
+## Install R and RStudio Workbench
+
+COPY rstudio/create.R /tmp/create.R 
+
+RUN apt-get update -y && \
+	apt-get install -y gdebi-core curl && \ 
+	IFS=" "; for R_VERSION in $R_VERSIONS ; \
+	do \
+		curl -O https://cdn.rstudio.com/r/ubuntu-2004/pkgs/r-${R_VERSION}_1_amd64.deb && \
+		gdebi -n r-${R_VERSION}_1_amd64.deb && \
+		rm -f r-${R_VERSION}_1_amd64.deb && \
+		/opt/R/$R_VERSION/bin/Rscript /tmp/create.R ;\
+	done && \
+	curl -O https://download2.rstudio.org/server/bionic/amd64/rstudio-workbench-${RSWB_VERSION}-amd64.deb && \
+	gdebi -n rstudio-workbench-${RSWB_VERSION}-amd64.deb && \
+	rm -f rstudio-workbench-${RSWB_VERSION}-amd64.deb && \
+    	apt clean all && \
+    	rm -rf /var/cache/apt
+
+COPY rstudio/launcher.conf /etc/rstudio/launcher.conf
+COPY rstudio/launcher.slurm.conf /etc/rstudio/launcher.slurm.conf
+COPY rstudio/launcher.slurm.profiles.conf /etc/rstudio/launcher.slurm.profiles.conf
+COPY rstudio/rserver.conf /etc/rstudio/rserver.conf
+
+## Install SLURM
 
 RUN set -ex \
-    && yum makecache fast \
-    && yum -y update \
-    && yum -y install epel-release \
-    && yum -y install \
+    && apt-get update \
+    && apt-get -y install \
        wget \
        bzip2 \
        perl \
+       gcc-9 \
+       g++-9 \
        gcc \
-       gcc-c++\
+       g++ \
        git \
        gnupg \
        make \
        munge \
-       munge-devel \
-       python-devel \
-       python-pip \
-       python34 \
-       python34-devel \
-       python34-pip \
+       libmunge-dev \
+       python-is-python3 \
+       python3.8-dev \
+       python3-pip \
+       cython \
+       cython3 \
        mariadb-server \
-       mariadb-devel \
+       mariadb-client \
+       libmariadbd-dev \
        psmisc \
        bash-completion \
-       vim-enhanced \
-    && yum clean all \
-    && rm -rf /var/cache/yum
-    
-RUN ln -s /usr/bin/python3.4 /usr/bin/python3
-
-RUN pip install Cython nose && pip3.4 install Cython nose
+       vim \
+       python-nose \
+       cython \
+    && apt clean all \
+    && rm -rf /var/cache/apt
 
 RUN set -ex \
     && wget -O /usr/local/bin/gosu "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-amd64" \
@@ -51,12 +82,12 @@ RUN set -ex \
     && chmod +x /usr/local/bin/gosu \
     && gosu nobody true
 
-RUN set -x \
+RUN /bin/bash -c "set -x \
     && git clone https://github.com/SchedMD/slurm.git \
     && pushd slurm \
     && git checkout tags/$SLURM_TAG \
     && ./configure --enable-debug --prefix=/usr --sysconfdir=/etc/slurm \
-        --with-mysql_config=/usr/bin  --libdir=/usr/lib64 \
+        --with-mysql_config=/usr/bin  --libdir=/usr/lib64 >& /build.log\
     && make install \
     && install -D -m644 etc/cgroup.conf.example /etc/slurm/cgroup.conf.example \
     && install -D -m644 etc/slurm.conf.example /etc/slurm/slurm.conf.example \
@@ -66,7 +97,7 @@ RUN set -x \
     && rm -rf slurm \
     && groupadd -r --gid=995 slurm \
     && useradd -r -g slurm --uid=995 slurm \
-    && mkdir /etc/sysconfig/slurm \
+    && mkdir -p /etc/sysconfig/slurm \
         /var/spool/slurmd \
         /var/run/slurmd \
         /var/run/slurmdbd \
@@ -83,10 +114,24 @@ RUN set -x \
         /var/lib/slurmd/qos_usage \
         /var/lib/slurmd/fed_mgr_state \
     && chown -R slurm:slurm /var/*/slurm* \
-    && /sbin/create-munge-key
+    && /sbin/create-munge-key "
 
 COPY slurm.conf /etc/slurm/slurm.conf
 COPY slurmdbd.conf /etc/slurm/slurmdbd.conf
+
+RUN mkdir -p /etc/postfix
+
+COPY rstudio/main.cf /etc/postfix/main.cf
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN set -ex \
+    && apt-get update \
+    && apt-get -y install \
+       postfix mailutils \
+    && apt clean all \
+    && rm -rf /var/cache/apt
+
+RUN chmod 0600 /etc/slurm/slurmdbd.conf
 
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]

@@ -84,8 +84,8 @@ RUN umask 0022 && echo "export TZ=Europe/Paris" > /etc/profile.d/timezone.sh
 
 ### Copy slurm.conf and slurmdbd.conf 
 
-COPY slurm.conf /etc/slurm/slurm.conf
-COPY slurmdbd.conf /etc/slurm/slurmdbd.conf
+COPY slurm/slurm.conf /etc/slurm/slurm.conf
+COPY slurm/slurmdbd.conf /etc/slurm/slurmdbd.conf
 RUN chmod 0600 /etc/slurm/slurmdbd.conf
 
 

@@ -113,8 +113,8 @@ RUN /bin/bash -c "set -x \
     && chown -R slurm:slurm /var/*/slurm* \
     && /sbin/create-munge-key -f"
 
-COPY slurm.conf /etc/slurm/slurm.conf
-COPY slurmdbd.conf /etc/slurm/slurmdbd.conf
+COPY slurm/slurm.conf /etc/slurm/slurm.conf
+COPY slurm/slurmdbd.conf /etc/slurm/slurmdbd.conf
 
 RUN chmod 0600 /etc/slurm/slurmdbd.conf
 

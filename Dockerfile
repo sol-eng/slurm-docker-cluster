@@ -12,6 +12,7 @@ ARG R_VERSIONS="3.6.3 4.0.5 4.1.2"
 ARG RSWB_VERSION="2021.09.0-351.pro6"
 ARG PROXY="192.168.0.38"
 
+RUN echo $SLURM_TAG
 
 RUN if test -n $PROXY; then echo "Acquire::http { Proxy \"http://$PROXY:3142\"; };" >> /etc/apt/apt.conf.d/01proxy; fi
 
@@ -114,7 +115,7 @@ RUN /bin/bash -c "set -x \
         /var/lib/slurmd/qos_usage \
         /var/lib/slurmd/fed_mgr_state \
     && chown -R slurm:slurm /var/*/slurm* \
-    && /sbin/create-munge-key "
+    && /sbin/create-munge-key -f"
 
 COPY slurm.conf /etc/slurm/slurm.conf
 COPY slurmdbd.conf /etc/slurm/slurmdbd.conf
@@ -127,7 +128,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN set -ex \
     && apt-get update \
     && apt-get -y install \
-       postfix mailutils \
+       net-tools iputils-ping postfix mailutils \
     && apt clean all \
     && rm -rf /var/cache/apt
 

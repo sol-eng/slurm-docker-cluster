@@ -42,6 +42,7 @@ services:
       - var_log_slurm:/var/log/slurm
     expose:
       - "6817"
+      - "8787"
     depends_on:
       - "slurmdbd"
 

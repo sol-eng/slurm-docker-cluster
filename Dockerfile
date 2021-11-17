@@ -6,12 +6,11 @@ LABEL org.opencontainers.image.source="https://github.com/michaelmayer2/slurm-do
       org.label-schema.docker.cmd="docker-compose up -d" \
       maintainer="Michael Mayer"
 
-ARG SLURM_TAG=slurm-20-11-8-1
+ARG SLURM_TAG=slurm-19-05-2-1
 ARG GOSU_VERSION=1.11
 ARG R_VERSIONS="3.6.3 4.0.5 4.1.2"
 ARG RSWB_VERSION="2021.09.0-351.pro6"
-ARG PROXY="192.168.0.38"
-
+ARG PROXY="192.168.0.100"
 
 RUN if test -n $PROXY; then echo "Acquire::http { Proxy \"http://$PROXY:3142\"; };" >> /etc/apt/apt.conf.d/01proxy; fi
 
@@ -41,62 +40,12 @@ COPY rstudio/rserver.conf /etc/rstudio/rserver.conf
 
 ## Install SLURM
 
-RUN set -ex \
-    && apt-get update \
-    && apt-get -y install \
-       wget \
-       bzip2 \
-       perl \
-       gcc-9 \
-       g++-9 \
-       gcc \
-       g++ \
-       git \
-       gnupg \
-       make \
-       munge \
-       libmunge-dev \
-       python-is-python3 \
-       python3.8-dev \
-       python3-pip \
-       cython \
-       cython3 \
-       mariadb-server \
-       mariadb-client \
-       libmariadbd-dev \
-       psmisc \
-       bash-completion \
-       vim \
-       python-nose \
-       cython \
-    && apt clean all \
-    && rm -rf /var/cache/apt
-
-RUN set -ex \
-    && wget -O /usr/local/bin/gosu "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-amd64" \
-    && wget -O /usr/local/bin/gosu.asc "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-amd64.asc" \
-    && export GNUPGHOME="$(mktemp -d)" \
-    && gpg --batch --keyserver hkps://keys.openpgp.org --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4 \
-    && gpg --batch --verify /usr/local/bin/gosu.asc /usr/local/bin/gosu \
-    && rm -rf "${GNUPGHOME}" /usr/local/bin/gosu.asc \
-    && chmod +x /usr/local/bin/gosu \
-    && gosu nobody true
-
+### Populate directories and set permissions 
+ 
 RUN /bin/bash -c "set -x \
-    && git clone https://github.com/SchedMD/slurm.git \
-    && pushd slurm \
-    && git checkout tags/$SLURM_TAG \
-    && ./configure --enable-debug --prefix=/usr --sysconfdir=/etc/slurm \
-        --with-mysql_config=/usr/bin  --libdir=/usr/lib64 >& /build.log\
-    && make install \
-    && install -D -m644 etc/cgroup.conf.example /etc/slurm/cgroup.conf.example \
-    && install -D -m644 etc/slurm.conf.example /etc/slurm/slurm.conf.example \
-    && install -D -m644 etc/slurmdbd.conf.example /etc/slurm/slurmdbd.conf.example \
-    && install -D -m644 contribs/slurm_completion_help/slurm_completion.sh /etc/profile.d/slurm_completion.sh \
-    && popd \
-    && rm -rf slurm \
     && groupadd -r --gid=995 slurm \
-    && useradd -r -g slurm --uid=995 slurm \
+    && useradd -r -s /bin/bash -g slurm --uid=995 slurm \
+    && mkdir -p /home/slurm && chown slurm /home/slurm \
     && mkdir -p /etc/sysconfig/slurm \
         /var/spool/slurmd \
         /var/run/slurmd \
@@ -113,11 +62,35 @@ RUN /bin/bash -c "set -x \
         /var/lib/slurmd/assoc_usage \
         /var/lib/slurmd/qos_usage \
         /var/lib/slurmd/fed_mgr_state \
-    && chown -R slurm:slurm /var/*/slurm* \
-    && /sbin/create-munge-key "
+    && ln -s /etc/slurm-llnl /etc/slurm \
+    && chown -R slurm:slurm /var/*/slurm* " 
+
+
+### Install slurm packages and db dependencies 
+
+RUN set -ex \
+    && apt-get update \
+    && apt-get -y install \
+       slurmd slurmdbd slurmctld slurm-client \
+       mariadb-server \
+       mariadb-client \
+       libmariadbd-dev \
+       psmisc \
+       bash-completion \
+    && apt clean all \
+    && rm -rf /var/cache/apt
+
+RUN umask 0022 && echo "export TZ=Europe/Paris" > /etc/profile.d/timezone.sh
+
+### Copy slurm.conf and slurmdbd.conf 
 
 COPY slurm.conf /etc/slurm/slurm.conf
 COPY slurmdbd.conf /etc/slurm/slurmdbd.conf
+RUN chmod 0600 /etc/slurm/slurmdbd.conf
+
+
+
+## Configure a mail client and add a couple of nice to have tools
 
 RUN mkdir -p /etc/postfix
 
@@ -127,11 +100,24 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN set -ex \
     && apt-get update \
     && apt-get -y install \
-       postfix mailutils \
+       wget gpg vim net-tools iputils-ping postfix mailutils \
     && apt clean all \
     && rm -rf /var/cache/apt
 
-RUN chmod 0600 /etc/slurm/slurmdbd.conf
+
+## Install gosu
+
+RUN set -ex \
+    && wget -O /usr/local/bin/gosu "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-amd64" \
+    && wget -O /usr/local/bin/gosu.asc "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-amd64.asc" \
+    && export GNUPGHOME="$(mktemp -d)" \
+    && gpg --batch --keyserver hkps://keys.openpgp.org --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4 \
+    && gpg --batch --verify /usr/local/bin/gosu.asc /usr/local/bin/gosu \
+    && rm -rf "${GNUPGHOME}" /usr/local/bin/gosu.asc \
+    && chmod +x /usr/local/bin/gosu \
+    && gosu nobody true
+
+
 
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]

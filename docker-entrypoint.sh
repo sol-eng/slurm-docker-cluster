@@ -44,17 +44,11 @@ then
 
     echo "---> Starting the Slurm Controller Daemon (slurmctld) ..."
 
-    sed -i '/^Cache/ s/./#&/' /etc/slurm/slurm.conf           
-    sed -i '/^Fast/ s/./#&/' /etc/slurm/slurm.conf 
-    sed -i '/^AccountingStorageLoc/ s/./#&/' /etc/slurm/slurm.conf
-    grep Storage /etc/slurm/slurm.conf
+    /etc/init.d/rstudio-server start
+    /etc/init.d/rstudio-launcher start
+
     exec gosu slurm /usr/sbin/slurmctld -Dvvv
 
-    # R Studio integration 
-    sed -i "s/CALLBACKHOST/`hostname`/" /etc/rstudio/rserver.conf
-
-    systemctl restart rstudio-server
-    systemctl restart rstudio-launcher
 fi
 
 if [ "$1" = "slurmd" ]

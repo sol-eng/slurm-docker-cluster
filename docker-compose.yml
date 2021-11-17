@@ -36,14 +36,18 @@ services:
     container_name: slurmctld
     hostname: slurmctld
     privileged: true
+#    networks: 
+#      - host
     volumes:
       - etc_munge:/etc/munge
       - etc_slurm:/etc/slurm
       - slurm_jobdir:/data
       - var_log_slurm:/var/log/slurm
+      - home:/home
     expose:
       - "6817"
-      - "8787"
+    ports:
+      - "8787:8787"
     depends_on:
       - "slurmdbd"
 
@@ -53,11 +57,13 @@ services:
     command: ["slurmd"]
     hostname: c1
     container_name: c1
+    privileged: true
     volumes:
       - etc_munge:/etc/munge
       - etc_slurm:/etc/slurm
       - slurm_jobdir:/data
       - var_log_slurm:/var/log/slurm
+      - home:/home
     expose:
       - "6818"
     depends_on:
@@ -69,15 +75,18 @@ services:
     command: ["slurmd"]
     hostname: c2
     container_name: c2
+    privileged: true
     volumes:
       - etc_munge:/etc/munge
       - etc_slurm:/etc/slurm
       - slurm_jobdir:/data
       - var_log_slurm:/var/log/slurm
+      - home:/home
     expose:
       - "6818"
     depends_on:
       - "slurmctld"
+
 
 volumes:
   etc_munge:
@@ -85,3 +94,5 @@ volumes:
   slurm_jobdir:
   var_lib_mysql:
   var_log_slurm:
+  home:
+

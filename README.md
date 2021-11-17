@@ -27,7 +27,7 @@ The compose file will create the following named volumes:
 Build the image locally:
 
 ```console
-docker build -t slurm-docker-cluster:19.05.1 .
+docker build -t slurm-docker-cluster:19.05.2 .
 ```
 
 Build a different version of Slurm using Docker build args and the Slurm Git

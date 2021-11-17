@@ -46,7 +46,9 @@ then
 
     /etc/init.d/rstudio-server start
     /etc/init.d/rstudio-launcher start
-
+    if [[ -n $RSW_LICENSE ]]; then 
+	/usr/lib/rstudio-server/bin/license-manager activate $RSW_LICENSE
+    fi
     exec gosu slurm /usr/sbin/slurmctld -Dvvv
 
 fi

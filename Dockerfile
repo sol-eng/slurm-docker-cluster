@@ -119,6 +119,14 @@ RUN set -ex \
 
 
 
+## Add test user mm
+
+RUN useradd mm -s /bin/bash \
+        && mkdir /home/mm \
+        && chown mm /home/mm \
+        && bash -c "echo -e \"test123\\ntest123\" | passwd mm"
+
+
 COPY scripts/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 

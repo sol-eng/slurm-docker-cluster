@@ -4,6 +4,10 @@ This is a multi-container Slurm cluster using docker-compose.  The compose file
 creates named volumes for persistent storage of MySQL data files as well as
 Slurm state and log directories.
 
+## Use of tags
+
+Version tags with suffix -base build a SLURM cluster with an R only R Studio Workbench. Suffix -complete builds the same with Jupyter and VSCode as well as Python support.  
+
 ## Containers and Volumes
 
 The compose file will run the following containers:

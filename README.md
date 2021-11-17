@@ -50,6 +50,8 @@ Run `docker-compose` to instantiate the cluster:
 docker-compose up -d
 ```
 
+Note: You can set SLURM_VERSION to the version of your slurm-docker-cluster container to run RStudio Workbench with a version other than 19.05.2. 
+
 ## RStudio Workbench availability
 
 Once the cluster is up and running, RSWB is available at http://localhost:8787

@@ -34,7 +34,7 @@ Build a different version of Slurm using Docker build args and the Slurm Git
 tag:
 
 ```console
-docker build --build-arg SLURM_TAG="slurm-19-05-2-1" -t slurm-docker-cluster:19.05.2 .
+docker build --build-arg SLURM_TAG="slurm-19-05-2-1" -t slurm-docker-cluster:19.05.2 -f Dockerfile.compile .
 ```
 
 > Note: You will need to update the container image version in
@@ -50,21 +50,9 @@ Run `docker-compose` to instantiate the cluster:
 docker-compose up -d
 ```
 
-## Register the Cluster with SlurmDBD
+## RStudio Workbench availability
 
-To register the cluster to the slurmdbd daemon, run the `register_cluster.sh`
-script:
-
-```console
-./register_cluster.sh
-```
-
-> Note: You may have to wait a few seconds for the cluster daemons to become
-> ready before registering the cluster.  Otherwise, you may get an error such
-> as **sacctmgr: error: Problem talking to the database: Connection refused**.
->
-> You can check the status of the cluster by viewing the logs: `docker-compose
-> logs -f`
+Once the cluster is up and running, RSWB is available at http://localhost:8787
 
 ## Accessing the Cluster
 
@@ -103,12 +91,16 @@ docker-compose stop
 docker-compose start
 ```
 
+or for restarting simply
+
+```console
+docker-compose restart
+```
+
 ## Deleting the Cluster
 
 To remove all containers and volumes, run:
 
 ```console
-docker-compose stop
-docker-compose rm -f
-docker volume rm slurm-docker-cluster_etc_munge slurm-docker-cluster_etc_slurm slurm-docker-cluster_slurm_jobdir slurm-docker-cluster_var_lib_mysql slurm-docker-cluster_var_log_slurm
+./scripts/stop.sh
 ```

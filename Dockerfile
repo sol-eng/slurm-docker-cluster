@@ -10,7 +10,7 @@ ARG SLURM_TAG=slurm-19-05-2-1
 ARG GOSU_VERSION=1.11
 ARG R_VERSIONS="3.6.3 4.0.5 4.1.2"
 ARG RSWB_VERSION="2021.09.0-351.pro6"
-ARG PROXY="192.168.0.100"
+ARG PROXY
 
 RUN if test -n $PROXY; then echo "Acquire::http { Proxy \"http://$PROXY:3142\"; };" >> /etc/apt/apt.conf.d/01proxy; fi
 

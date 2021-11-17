@@ -10,7 +10,7 @@ ARG SLURM_TAG=slurm-20-11-8-1
 ARG GOSU_VERSION=1.11
 ARG R_VERSIONS="3.6.3 4.0.5 4.1.2"
 ARG RSWB_VERSION="2021.09.0-351.pro6"
-ARG PROXY="192.168.0.38"
+ARG PROXY
 
 RUN echo $SLURM_TAG
 
@@ -21,7 +21,7 @@ RUN if test -n $PROXY; then echo "Acquire::http { Proxy \"http://$PROXY:3142\"; 
 COPY rstudio/create.R /tmp/create.R 
 
 RUN apt-get update -y && \
-	apt-get install -y gdebi-core curl && \ 
+	apt-get install -y gdebi-core curl wget && \ 
 	IFS=" "; for R_VERSION in $R_VERSIONS ; \
 	do \
 		curl -O https://cdn.rstudio.com/r/ubuntu-2004/pkgs/r-${R_VERSION}_1_amd64.deb && \

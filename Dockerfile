@@ -37,9 +37,6 @@ COPY rstudio/launcher.conf /etc/rstudio/launcher.conf
 COPY rstudio/launcher.slurm.conf /etc/rstudio/launcher.slurm.conf
 COPY rstudio/launcher.slurm.profiles.conf /etc/rstudio/launcher.slurm.profiles.conf
 COPY rstudio/rserver.conf /etc/rstudio/rserver.conf
-COPY rstudio/vscode.conf /etc/rstudio/vscode.conf
-COPY rstudio/vscode-user-settings.json  /etc/rstudio/vscode-user-settings.json
-COPY rstudio/jupyter.conf /etc/rstudio/jupyter.conf
 
 ## Install SLURM
 
@@ -161,10 +158,14 @@ RUN curl -O https://repo.anaconda.com/miniconda/Miniconda3-4.7.12.1-Linux-x86_64
     rm -rf Miniconda3-*-Linux-x86_64.sh && \
     /opt/python/${PYTHON_VERSION_ALT}/bin/python -m ipykernel install --name py${PYTHON_VERSION_ALT} --display-name "Python ${PYTHON_VERSION_ALT}"
 
+COPY rstudio/jupyter.conf /etc/rstudio/jupyter.conf
+
 # Install VSCode code-server --------------------------------------------------#
 
 RUN rstudio-server install-vs-code /opt/code-server/
 
+COPY rstudio/vscode.conf /etc/rstudio/vscode.conf
+COPY rstudio/vscode-user-settings.json  /etc/rstudio/vscode-user-settings.json
 
 
 ## Install gosu

@@ -44,13 +44,21 @@ then
 
     echo "---> Starting the Slurm Controller Daemon (slurmctld) ..."
 
-    /etc/init.d/rstudio-server start
-    /etc/init.d/rstudio-launcher start
-    if [[ -n $RSW_LICENSE ]]; then 
-	/usr/lib/rstudio-server/bin/license-manager activate $RSW_LICENSE
-    fi
     exec gosu slurm /usr/sbin/slurmctld -Dvvv
 
+fi
+
+if [ "$1" = "rstudio" ]
+then
+    /etc/init.d/munge start
+    sinfo >& /dev/null; while [ $? -ne 0 ];  do sleep 5; sinfo >& /dev/null; done
+   
+    /etc/init.d/rstudio-server start
+    /etc/init.d/rstudio-launcher start
+    while true; 
+	do
+	sleep 120
+	done
 fi
 
 if [ "$1" = "slurmd" ]

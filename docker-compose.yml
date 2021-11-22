@@ -35,6 +35,24 @@ services:
     command: ["slurmctld"]
     container_name: slurmctld
     hostname: slurmctld
+    privileged: true 
+    volumes:
+      - etc_munge:/etc/munge
+      - etc_slurm:/etc/slurm
+      - slurm_jobdir:/data
+      - var_log_slurm:/var/log/slurm
+      - home:/home
+    expose:
+      - "6817"
+    depends_on:
+      - "slurmdbd"
+
+  rstudio:
+    image: slurm-docker-cluster:${SLURM_VERSION:-19.05.2}
+    platform: linux/amd64
+    command: ["rstudio"]
+    container_name: rstudio
+    hostname: rstudio
     privileged: true
     volumes:
       - etc_munge:/etc/munge
@@ -47,7 +65,7 @@ services:
     ports:
       - "8787:8787"
     depends_on:
-      - "slurmdbd"
+      - "slurmctld"
 
   c1:
     image: slurm-docker-cluster:${SLURM_VERSION:-19.05.2}
@@ -55,7 +73,7 @@ services:
     command: ["slurmd"]
     hostname: c1
     container_name: c1
-    privileged: true
+    privileged: false
     volumes:
       - etc_munge:/etc/munge
       - etc_slurm:/etc/slurm
@@ -73,7 +91,7 @@ services:
     command: ["slurmd"]
     hostname: c2
     container_name: c2
-    privileged: true
+    privileged: false
     volumes:
       - etc_munge:/etc/munge
       - etc_slurm:/etc/slurm
@@ -84,6 +102,8 @@ services:
       - "6818"
     depends_on:
       - "slurmctld"
+
+
 
 
 volumes:

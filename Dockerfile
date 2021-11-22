@@ -37,6 +37,9 @@ COPY rstudio/launcher.conf /etc/rstudio/launcher.conf
 COPY rstudio/launcher.slurm.conf /etc/rstudio/launcher.slurm.conf
 COPY rstudio/launcher.slurm.profiles.conf /etc/rstudio/launcher.slurm.profiles.conf
 COPY rstudio/rserver.conf /etc/rstudio/rserver.conf
+COPY rstudio/vscode.conf /etc/rstudio/vscode.conf
+COPY rstudio/vscode-user-settings.json  /etc/rstudio/vscode-user-settings.json
+COPY rstudio/jupyter.conf /etc/rstudio/jupyter.conf
 
 ## Install SLURM
 
@@ -106,6 +109,62 @@ RUN set -ex \
        wget gpg vim net-tools iputils-ping postfix mailutils \
     && apt clean all \
     && rm -rf /var/cache/apt
+
+## Add VSCode and Jupyter/Python (copied from https://github.com/rstudio/rstudio-docker-products/blob/main/workbench/Dockerfile) 
+
+# Install jupyter -------------------------------------------------------------#
+
+ARG JUPYTER_VERSION=3.8.10
+RUN curl -O https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
+    bash Miniconda3-latest-Linux-x86_64.sh -bp /opt/python/jupyter && \
+    /opt/python/jupyter/bin/conda install -y python==${JUPYTER_VERSION} && \
+    rm -rf Miniconda3-latest-Linux-x86_64.sh && \
+    /opt/python/jupyter/bin/pip install \
+    jupyter==1.0.0 \
+    'jupyterlab<3.0.0' \
+    rsp_jupyter \
+    rsconnect_jupyter && \
+    /opt/python/jupyter/bin/jupyter kernelspec remove python3 -f && \
+    /opt/python/jupyter/bin/pip uninstall -y ipykernel
+
+# Install RSW/RSC Notebook Extensions --------------------#
+
+RUN /opt/python/jupyter/bin/jupyter-nbextension install --sys-prefix --py rsp_jupyter && \
+    /opt/python/jupyter/bin/jupyter-nbextension enable --sys-prefix --py rsp_jupyter && \
+    /opt/python/jupyter/bin/jupyter-nbextension install --sys-prefix --py rsconnect_jupyter && \
+    /opt/python/jupyter/bin/jupyter-nbextension enable --sys-prefix --py rsconnect_jupyter && \
+    /opt/python/jupyter/bin/jupyter-serverextension enable --sys-prefix --py rsconnect_jupyter
+
+# Install Python --------------------------------------------------------------#
+
+ARG PYTHON_VERSION=3.9.5
+RUN curl -O https://repo.anaconda.com/miniconda/Miniconda3-4.7.12.1-Linux-x86_64.sh && \
+    bash Miniconda3-4.7.12.1-Linux-x86_64.sh -bp /opt/python/${PYTHON_VERSION} && \
+    /opt/python/${PYTHON_VERSION}/bin/conda install -y python==${PYTHON_VERSION} && \
+    /opt/python/${PYTHON_VERSION}/bin/pip install \
+        ipykernel \
+        virtualenv \
+        && \
+    rm -rf Miniconda3-*-Linux-x86_64.sh && \
+    /opt/python/${PYTHON_VERSION}/bin/python -m ipykernel install --name py${PYTHON_VERSION} --display-name "Python ${PYTHON_VERSION}"
+
+# Install another Python --------------------------------------------------------------#
+
+ARG PYTHON_VERSION_ALT=3.8.10
+RUN curl -O https://repo.anaconda.com/miniconda/Miniconda3-4.7.12.1-Linux-x86_64.sh && \
+    bash Miniconda3-4.7.12.1-Linux-x86_64.sh -bp /opt/python/${PYTHON_VERSION_ALT} && \
+    /opt/python/${PYTHON_VERSION_ALT}/bin/conda install -y python==${PYTHON_VERSION_ALT} && \
+    /opt/python/${PYTHON_VERSION_ALT}/bin/pip install \
+        ipykernel \
+        virtualenv \
+        && \
+    rm -rf Miniconda3-*-Linux-x86_64.sh && \
+    /opt/python/${PYTHON_VERSION_ALT}/bin/python -m ipykernel install --name py${PYTHON_VERSION_ALT} --display-name "Python ${PYTHON_VERSION_ALT}"
+
+# Install VSCode code-server --------------------------------------------------#
+
+RUN rstudio-server install-vs-code /opt/code-server/
+
 
 
 ## Install gosu

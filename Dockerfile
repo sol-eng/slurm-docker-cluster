@@ -65,6 +65,9 @@ RUN /bin/bash -c "set -x \
     && ln -s /etc/slurm-llnl /etc/slurm \
     && chown -R slurm:slurm /var/*/slurm* " 
 
+RUN /bin/bash -c "set -x \
+    && groupadd -r --gid=105 munge \
+    && useradd -r -s /bin/bash -g munge --uid=105 munge" 
 
 ### Install slurm packages and db dependencies 
 
@@ -121,9 +124,10 @@ RUN set -ex \
 
 ## Add test user mm
 
-RUN useradd mm -s /bin/bash \
+RUN groupadd mm -g 2048 \
+        && useradd mm -s /bin/bash -u 2048 -g 2048\
         && mkdir /home/mm \
-        && chown mm /home/mm \
+        && chown mm:mm /home/mm \
         && bash -c "echo -e \"test123\\ntest123\" | passwd mm"
 
 

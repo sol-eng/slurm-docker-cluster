@@ -1,5 +1,4 @@
 #!/bin/bash
-set -ex
 
 if [ "$1" = "slurmdbd" ]
 then

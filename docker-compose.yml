@@ -13,11 +13,27 @@ services:
     volumes:
       - var_lib_mysql:/var/lib/mysql
 
+  postgres:
+    image: postgres:14.5
+    hostname: postgres
+    container_name: postgres
+    environment:
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "yes"
+      POSTGRES_DB: "rstudio"
+    volumes:
+      - var_lib_postgres:/var/lib/postgres
+    expose:
+      - "5432"
+
   slurmdbd:
-    image: slurm-docker-cluster:${SLURM_VERSION:-19.05.2}
+    image: slurm-docker-cluster:${RSWB_VERSION:-2022.07.2-576.pro12}-${SLURM_VERSION:-slurm-22.05.4-1}
     build:
       context: .
       dockerfile: Dockerfile.compile 
+      args:
+        SLURM_VERSION: ${SLURM_VERSION:-22.05.4-1}
+        RSWB_VERSION: ${RSWB_VERSION:-2022.07.2-576.pro12}
     command: ["slurmdbd"]
     container_name: slurmdbd
     hostname: slurmdbd
@@ -30,35 +46,18 @@ services:
     depends_on:
       - mysql
 
-  slurmctld:
-    image: slurm-docker-cluster:${SLURM_VERSION:-19.05.2}
+  slurmctld1:
+    image: slurm-docker-cluster:${RSWB_VERSION:-2022.07.2-576.pro12}-slurm-${SLURM_VERSION:-22.05.4-1}
     build:
       context: .
       dockerfile: Dockerfile.compile
+      args:
+        SLURM_VERSION: ${SLURM_VERSION:-22.05.4-1}
+        RSWB_VERSION: ${RSWB_VERSION:-2022.07.2-576.pro12}
     command: ["slurmctld"]
-    container_name: slurmctld
-    hostname: slurmctld
+    container_name: slurmctld1
+    hostname: slurmctld1
     privileged: true 
-    volumes:
-      - etc_munge:/etc/munge
-      - etc_slurm:/etc/slurm
-      - slurm_jobdir:/data
-      - var_log_slurm:/var/log/slurm
-      - home:/home
-    expose:
-      - "6817"
-    depends_on:
-      - "slurmdbd"
-
-  rstudio:
-    image: slurm-docker-cluster:${SLURM_VERSION:-19.05.2}
-    build:
-      context: .
-      dockerfile: Dockerfile.compile
-    command: ["rstudio"]
-    container_name: rstudio
-    hostname: rstudio
-    privileged: true
     volumes:
       - etc_munge:/etc/munge
       - etc_slurm:/etc/slurm
@@ -70,13 +69,47 @@ services:
     ports:
       - "8787:8787"
     depends_on:
-      - "slurmctld"
+      - "slurmdbd"
+      - "postgres"
+    environment:
+      RSP_LICENSE: ${RSP_LICENSE}
 
-  c1:
-    image: slurm-docker-cluster:${SLURM_VERSION:-19.05.2}
+  slurmctld2:
+    image: slurm-docker-cluster:${RSWB_VERSION:-2022.07.2-576.pro12}-slurm-${SLURM_VERSION:-22.05.4-1}
     build:
       context: .
       dockerfile: Dockerfile.compile
+      args:
+        SLURM_VERSION: ${SLURM_VERSION:-22.05.4-1}
+        RSWB_VERSION: ${RSWB_VERSION:-2022.07.2-576.pro12}
+    command: ["slurmctld"]
+    container_name: slurmctld2
+    hostname: slurmctld2
+    privileged: true
+    volumes:
+      - etc_munge:/etc/munge
+      - etc_slurm:/etc/slurm
+      - slurm_jobdir:/data
+      - var_log_slurm:/var/log/slurm
+      - home:/home
+    expose:
+      - "6817"
+    ports:
+      - "8788:8787"
+    depends_on:
+      - "slurmdbd"
+      - "postgres"
+    environment:
+      RSP_LICENSE: ${RSP_LICENSE}
+
+  c1:
+    image: slurm-docker-cluster:${RSWB_VERSION:-2022.07.2-576.pro12}-slurm-${SLURM_VERSION:-22.05.4-1}
+    build:
+      context: .
+      dockerfile: Dockerfile.compile
+      args:
+        SLURM_VERSION: ${SLURM_VERSION:-22.05.4-1}
+        RSWB_VERSION: ${RSWB_VERSION:-2022.07.2-576.pro12}
     command: ["slurmd"]
     hostname: c1
     container_name: c1
@@ -90,13 +123,17 @@ services:
     expose:
       - "6818"
     depends_on:
-      - "slurmctld"
+      - "slurmctld1"
+      - "slurmctld2"
 
   c2:
-    image: slurm-docker-cluster:${SLURM_VERSION:-19.05.2}
+    image: slurm-docker-cluster:${RSWB_VERSION:-2022.07.2-576.pro12}-slurm-${SLURM_VERSION:-22.05.4-1}
     build:
       context: .
       dockerfile: Dockerfile.compile
+      args:
+        SLURM_VERSION: ${SLURM_VERSION:-22.05.4-1}
+        RSWB_VERSION: ${RSWB_VERSION:-2022.07.2-576.pro12}
     command: ["slurmd"]
     hostname: c2
     container_name: c2
@@ -110,7 +147,8 @@ services:
     expose:
       - "6818"
     depends_on:
-      - "slurmctld"
+      - "slurmctld1"
+      - "slurmctld2"
 
 
 
@@ -120,6 +158,7 @@ volumes:
   etc_slurm:
   slurm_jobdir:
   var_lib_mysql:
+  var_lib_postgres:
   var_log_slurm:
   home:
 

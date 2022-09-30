@@ -6,13 +6,14 @@ LABEL org.opencontainers.image.source="https://github.com/michaelmayer2/slurm-do
       org.label-schema.docker.cmd="docker-compose up -d" \
       maintainer="Michael Mayer"
 
-ARG SLURM_VERSION="22.05.4-1"
+ARG SLURM_VERSION
 ARG GOSU_VERSION=1.11
 ARG R_VERSIONS="3.6.3 4.0.5 4.1.2"
-ARG RSWB_VERSION="2022.07.2-576.pro12"
+ARG RSWB_VERSION
 ARG PROXY
 
-## Install R and RStudio Workbench
+
+# Install and configure R and RStudio Workbench
 
 COPY rstudio/create.R /tmp/create.R 
 
@@ -35,15 +36,94 @@ COPY rstudio/launcher.conf /etc/rstudio/launcher.conf
 COPY rstudio/launcher.slurm.conf /etc/rstudio/launcher.slurm.conf
 COPY rstudio/launcher.slurm.profiles.conf /etc/rstudio/launcher.slurm.profiles.conf
 COPY rstudio/rserver.conf /etc/rstudio/rserver.conf
+COPY rstudio/database.conf /etc/rstudio/database.conf
+RUN chmod 0600 /etc/rstudio/database.conf
+COPY rstudio/load-balancer /etc/rstudio/load-balancer
 
-RUN /bin/bash -c "set -x \
-    && groupadd -r --gid=105 munge \
-    && useradd -r -s /bin/bash -g munge --uid=105 munge"
+
+## Configure launcher.* and secure-cookie-key
+
+RUN apt-get update && apt-get install -y uuid && \
+	apt clean all && \
+	rm -rf /var/cache/apt
+
+RUN echo `uuid` > /etc/rstudio/secure-cookie-key && \
+	chown rstudio-server:rstudio-server \
+		/etc/rstudio/secure-cookie-key && \
+    chmod 0600 /etc/rstudio/secure-cookie-key
+
+RUN openssl genpkey -algorithm RSA \
+		-out /etc/rstudio/launcher.pem \
+		-pkeyopt rsa_keygen_bits:2048 && \
+	chown rstudio-server:rstudio-server \
+		/etc/rstudio/launcher.pem
+
+RUN openssl rsa -in /etc/rstudio/launcher.pem \
+		-pubout > /etc/rstudio/launcher.pub && \
+	chown rstudio-server:rstudio-server \
+		/etc/rstudio/launcher.pub
+
+
+## Add VSCode and Jupyter/Python 
+
+### Install Python  -------------------------------------------------------------#
+
+ARG PYTHON_VERSION=3.8.10
+RUN curl -O https://cdn.rstudio.com/python/ubuntu-2004/pkgs/python-${PYTHON_VERSION}_1_amd64.deb && \
+    apt-get update && gdebi -n python-${PYTHON_VERSION}_1_amd64.deb && apt clean all && \
+    rm -rf /var/cache/apt && rm -f python-${PYTHON_VERSION}_1_amd64.deb && \
+    /opt/python/${PYTHON_VERSION}/bin/pip install \
+         jupyter==1.0.0 \
+        'jupyterlab<3.0.0' \
+        rsp_jupyter \
+        rsconnect_jupyter && \
+    /opt/python/${PYTHON_VERSION}/bin/python -m ipykernel install --name py${PYTHON_VERSION} --display-name "Python ${PYTHON_VERSION}" 
+
+### Install RSW/RSC Notebook Extensions --------------------#
+
+RUN /opt/python/${PYTHON_VERSION}/bin/jupyter-nbextension install --sys-prefix --py rsp_jupyter && \
+    /opt/python/${PYTHON_VERSION}/bin/jupyter-nbextension enable --sys-prefix --py rsp_jupyter && \
+    /opt/python/${PYTHON_VERSION}/bin/jupyter-nbextension install --sys-prefix --py rsconnect_jupyter && \
+    /opt/python/${PYTHON_VERSION}/bin/jupyter-nbextension enable --sys-prefix --py rsconnect_jupyter && \
+    /opt/python/${PYTHON_VERSION}/bin/jupyter-serverextension enable --sys-prefix --py rsconnect_jupyter
+
+ARG PYTHON_VERSION_ALT=3.9.5
+RUN curl -O https://cdn.rstudio.com/python/ubuntu-2004/pkgs/python-${PYTHON_VERSION_ALT}_1_amd64.deb && \
+    apt-get update && gdebi -n python-${PYTHON_VERSION_ALT}_1_amd64.deb && apt clean all && \
+    rm -rf /var/cache/apt && rm -f python-${PYTHON_VERSION}_1_amd64.deb && \
+    /opt/python/${PYTHON_VERSION_ALT}/bin/pip install \
+         jupyter==1.0.0 \
+        'jupyterlab<3.0.0' \
+        rsp_jupyter \
+        rsconnect_jupyter && \
+    /opt/python/${PYTHON_VERSION_ALT}/bin/python -m ipykernel install --name py${PYTHON_VERSION_ALT} --display-name "Python ${PYTHON_VERSION_ALT}"
+
+### Install RSW/RSC Notebook Extensions --------------------#
+
+RUN /opt/python/${PYTHON_VERSION_ALT}/bin/jupyter-nbextension install --sys-prefix --py rsp_jupyter && \
+    /opt/python/${PYTHON_VERSION_ALT}/bin/jupyter-nbextension enable --sys-prefix --py rsp_jupyter && \
+    /opt/python/${PYTHON_VERSION_ALT}/bin/jupyter-nbextension install --sys-prefix --py rsconnect_jupyter && \
+    /opt/python/${PYTHON_VERSION_ALT}/bin/jupyter-nbextension enable --sys-prefix --py rsconnect_jupyter && \
+    /opt/python/${PYTHON_VERSION_ALT}/bin/jupyter-serverextension enable --sys-prefix --py rsconnect_jupyter
+
+COPY rstudio/jupyter.conf /etc/rstudio/jupyter.conf
+
+
+#### Install VSCode code-server --------------------------------------------------#
+
+RUN rstudio-server install-vs-code /opt/code-server/
+
+COPY rstudio/vscode.conf /etc/rstudio/vscode.conf
+COPY rstudio/vscode-user-settings.json  /etc/rstudio/vscode-user-settings.json
 
 
 ## Install SLURM
 
 ### Install prerequisites/dependencies
+
+RUN /bin/bash -c "set -x \
+    && groupadd -r --gid=105 munge \
+    && useradd -r -s /bin/bash -g munge --uid=105 munge"
 
 RUN set -ex \
     && apt-get update \
@@ -76,20 +156,19 @@ RUN set -ex \
     && apt clean all \
     && rm -rf /var/cache/apt
 
-### Build SLURM from source and add folders and permissions
 
-RUN /bin/bash -c "set -x \
-    && git clone --depth 1 -b slurm-${SLURM_VERSION//./-} https://github.com/SchedMD/slurm.git \
-    && pushd slurm \
-    && git checkout tags/$SLURM_TAG \
-    && ./configure --enable-debug --prefix=/usr --sysconfdir=/etc/slurm \
-        --with-mysql_config=/usr/bin  --libdir=/usr/lib64 >& /build.log\
+## Build SLURM from source and add folders and permissions
+RUN mkdir -p /tmp/build && cd /tmp/build \
+    && bash -c "git clone --depth 1 -b slurm-\${SLURM_VERSION//./-} https://github.com/SchedMD/slurm.git" \
+    && cd slurm \
+    && bash -c "./configure --enable-debug --prefix=/usr --sysconfdir=/etc/slurm \
+        --with-mysql_config=/usr/bin  --libdir=/usr/lib64 >& /tmp/build.log"\
     && make install \
     && install -D -m644 etc/cgroup.conf.example /etc/slurm/cgroup.conf.example \
     && install -D -m644 etc/slurm.conf.example /etc/slurm/slurm.conf.example \
     && install -D -m644 etc/slurmdbd.conf.example /etc/slurm/slurmdbd.conf.example \
     && install -D -m644 contribs/slurm_completion_help/slurm_completion.sh /etc/profile.d/slurm_completion.sh \
-    && popd \
+    && cd .. \
     && rm -rf slurm \
     && groupadd -r --gid=995 slurm \
     && useradd -r -g slurm --uid=995 slurm \
@@ -110,14 +189,12 @@ RUN /bin/bash -c "set -x \
         /var/lib/slurmd/qos_usage \
         /var/lib/slurmd/fed_mgr_state \
     && chown -R slurm:slurm /var/*/slurm* \
-    && /sbin/create-munge-key -f"
+    && /sbin/create-munge-key -f
 
 COPY slurm/slurm.conf /etc/slurm/slurm.conf
 COPY slurm/slurmdbd.conf /etc/slurm/slurmdbd.conf
 
 RUN chmod 0600 /etc/slurm/slurmdbd.conf
-
-
 
 ## Configure a mail client and add a couple of nice to have tools
 
@@ -133,65 +210,6 @@ RUN set -ex \
     && apt clean all \
     && rm -rf /var/cache/apt
 
-## Add VSCode and Jupyter/Python (copied from https://github.com/rstudio/rstudio-docker-products/blob/main/workbench/Dockerfile) 
-
-# Install jupyter -------------------------------------------------------------#
-
-ARG JUPYTER_VERSION=3.8.10
-RUN curl -O https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
-    bash Miniconda3-latest-Linux-x86_64.sh -bp /opt/python/jupyter && \
-    /opt/python/jupyter/bin/conda install -y python==${JUPYTER_VERSION} && \
-    rm -rf Miniconda3-latest-Linux-x86_64.sh && \
-    /opt/python/jupyter/bin/pip install \
-    jupyter==1.0.0 \
-    'jupyterlab<3.0.0' \
-    rsp_jupyter \
-    rsconnect_jupyter && \
-    /opt/python/jupyter/bin/jupyter kernelspec remove python3 -f && \
-    /opt/python/jupyter/bin/pip uninstall -y ipykernel
-
-# Install RSW/RSC Notebook Extensions --------------------#
-
-RUN /opt/python/jupyter/bin/jupyter-nbextension install --sys-prefix --py rsp_jupyter && \
-    /opt/python/jupyter/bin/jupyter-nbextension enable --sys-prefix --py rsp_jupyter && \
-    /opt/python/jupyter/bin/jupyter-nbextension install --sys-prefix --py rsconnect_jupyter && \
-    /opt/python/jupyter/bin/jupyter-nbextension enable --sys-prefix --py rsconnect_jupyter && \
-    /opt/python/jupyter/bin/jupyter-serverextension enable --sys-prefix --py rsconnect_jupyter
-
-# Install Python --------------------------------------------------------------#
-
-ARG PYTHON_VERSION=3.9.5
-RUN curl -O https://repo.anaconda.com/miniconda/Miniconda3-4.7.12.1-Linux-x86_64.sh && \
-    bash Miniconda3-4.7.12.1-Linux-x86_64.sh -bp /opt/python/${PYTHON_VERSION} && \
-    /opt/python/${PYTHON_VERSION}/bin/conda install -y python==${PYTHON_VERSION} && \
-    /opt/python/${PYTHON_VERSION}/bin/pip install \
-        ipykernel \
-        virtualenv \
-        && \
-    rm -rf Miniconda3-*-Linux-x86_64.sh && \
-    /opt/python/${PYTHON_VERSION}/bin/python -m ipykernel install --name py${PYTHON_VERSION} --display-name "Python ${PYTHON_VERSION}"
-
-# Install another Python --------------------------------------------------------------#
-
-ARG PYTHON_VERSION_ALT=3.8.10
-RUN curl -O https://repo.anaconda.com/miniconda/Miniconda3-4.7.12.1-Linux-x86_64.sh && \
-    bash Miniconda3-4.7.12.1-Linux-x86_64.sh -bp /opt/python/${PYTHON_VERSION_ALT} && \
-    /opt/python/${PYTHON_VERSION_ALT}/bin/conda install -y python==${PYTHON_VERSION_ALT} && \
-    /opt/python/${PYTHON_VERSION_ALT}/bin/pip install \
-        ipykernel \
-        virtualenv \
-        && \
-    rm -rf Miniconda3-*-Linux-x86_64.sh && \
-    /opt/python/${PYTHON_VERSION_ALT}/bin/python -m ipykernel install --name py${PYTHON_VERSION_ALT} --display-name "Python ${PYTHON_VERSION_ALT}"
-
-COPY rstudio/jupyter.conf /etc/rstudio/jupyter.conf
-
-# Install VSCode code-server --------------------------------------------------#
-
-RUN rstudio-server install-vs-code /opt/code-server/
-
-COPY rstudio/vscode.conf /etc/rstudio/vscode.conf
-COPY rstudio/vscode-user-settings.json  /etc/rstudio/vscode-user-settings.json
 
 
 ## Install gosu
@@ -207,16 +225,15 @@ RUN set -ex \
     && gosu nobody true
 
 
-## Add test user mm
+## Add test user rstudio
 
-RUN groupadd mm -g 2048 \
-        && useradd mm -s /bin/bash -u 2048 -g 2048\
-        && mkdir /home/mm \
-        && chown mm:mm /home/mm \
-        && bash -c "echo -e \"test123\\ntest123\" | passwd mm"
+RUN groupadd rstudio -g 2048 \
+        && useradd -m rstudio -s /bin/bash -u 2048 -g 2048\
+        && bash -c "echo -e \"rstudio\\nrstudio\" | passwd rstudio"
 
 
 COPY scripts/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 
 CMD ["slurmdbd"]

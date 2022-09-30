@@ -3,7 +3,6 @@ version: "2.2"
 services:
   mysql:
     image: mysql:5.7
-    platform: linux/amd64
     hostname: mysql
     container_name: mysql
     environment:
@@ -16,7 +15,9 @@ services:
 
   slurmdbd:
     image: slurm-docker-cluster:${SLURM_VERSION:-19.05.2}
-    platform: linux/amd64
+    build:
+      context: .
+      dockerfile: Dockerfile.compile 
     command: ["slurmdbd"]
     container_name: slurmdbd
     hostname: slurmdbd
@@ -31,7 +32,9 @@ services:
 
   slurmctld:
     image: slurm-docker-cluster:${SLURM_VERSION:-19.05.2}
-    platform: linux/amd64
+    build:
+      context: .
+      dockerfile: Dockerfile.compile
     command: ["slurmctld"]
     container_name: slurmctld
     hostname: slurmctld
@@ -49,7 +52,9 @@ services:
 
   rstudio:
     image: slurm-docker-cluster:${SLURM_VERSION:-19.05.2}
-    platform: linux/amd64
+    build:
+      context: .
+      dockerfile: Dockerfile.compile
     command: ["rstudio"]
     container_name: rstudio
     hostname: rstudio
@@ -69,7 +74,9 @@ services:
 
   c1:
     image: slurm-docker-cluster:${SLURM_VERSION:-19.05.2}
-    platform: linux/amd64
+    build:
+      context: .
+      dockerfile: Dockerfile.compile
     command: ["slurmd"]
     hostname: c1
     container_name: c1
@@ -87,7 +94,9 @@ services:
 
   c2:
     image: slurm-docker-cluster:${SLURM_VERSION:-19.05.2}
-    platform: linux/amd64
+    build:
+      context: .
+      dockerfile: Dockerfile.compile
     command: ["slurmd"]
     hostname: c2
     container_name: c2

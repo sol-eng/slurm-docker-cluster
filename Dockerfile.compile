@@ -6,15 +6,11 @@ LABEL org.opencontainers.image.source="https://github.com/michaelmayer2/slurm-do
       org.label-schema.docker.cmd="docker-compose up -d" \
       maintainer="Michael Mayer"
 
-ARG SLURM_TAG=slurm-20-11-8-1
+ARG SLURM_VERSION="22.05.4-1"
 ARG GOSU_VERSION=1.11
 ARG R_VERSIONS="3.6.3 4.0.5 4.1.2"
-ARG RSWB_VERSION="2021.09.0-351.pro6"
+ARG RSWB_VERSION="2022.07.2-576.pro12"
 ARG PROXY
-
-RUN echo $SLURM_TAG
-
-RUN if test -n $PROXY; then echo "Acquire::http { Proxy \"http://$PROXY:3142\"; };" >> /etc/apt/apt.conf.d/01proxy; fi
 
 ## Install R and RStudio Workbench
 
@@ -83,7 +79,7 @@ RUN set -ex \
 ### Build SLURM from source and add folders and permissions
 
 RUN /bin/bash -c "set -x \
-    && git clone https://github.com/SchedMD/slurm.git \
+    && git clone --depth 1 -b slurm-${SLURM_VERSION//./-} https://github.com/SchedMD/slurm.git \
     && pushd slurm \
     && git checkout tags/$SLURM_TAG \
     && ./configure --enable-debug --prefix=/usr --sysconfdir=/etc/slurm \

@@ -46,7 +46,7 @@ services:
     depends_on:
       - mysql
 
-  slurmctld1:
+  slurmctld:
     image: slurm-docker-cluster:${RSWB_VERSION:-2022.07.2-576.pro12}-slurm-${SLURM_VERSION:-22.05.4-1}
     build:
       context: .
@@ -55,8 +55,8 @@ services:
         SLURM_VERSION: ${SLURM_VERSION:-22.05.4-1}
         RSWB_VERSION: ${RSWB_VERSION:-2022.07.2-576.pro12}
     command: ["slurmctld"]
-    container_name: slurmctld1
-    hostname: slurmctld1
+    container_name: slurmctld
+    hostname: slurmctld
     privileged: true 
     volumes:
       - etc_munge:/etc/munge
@@ -66,15 +66,10 @@ services:
       - home:/home
     expose:
       - "6817"
-    ports:
-      - "8787:8787"
     depends_on:
       - "slurmdbd"
-      - "postgres"
-    environment:
-      RSP_LICENSE: ${RSP_LICENSE}
 
-  slurmctld2:
+  rstudio1:
     image: slurm-docker-cluster:${RSWB_VERSION:-2022.07.2-576.pro12}-slurm-${SLURM_VERSION:-22.05.4-1}
     build:
       context: .
@@ -82,9 +77,9 @@ services:
       args:
         SLURM_VERSION: ${SLURM_VERSION:-22.05.4-1}
         RSWB_VERSION: ${RSWB_VERSION:-2022.07.2-576.pro12}
-    command: ["slurmctld"]
-    container_name: slurmctld2
-    hostname: slurmctld2
+    command: ["rstudio"]
+    container_name: rstudio1
+    hostname: rstudio1
     privileged: true
     volumes:
       - etc_munge:/etc/munge
@@ -93,11 +88,40 @@ services:
       - var_log_slurm:/var/log/slurm
       - home:/home
     expose:
-      - "6817"
+      - "8787"
+    ports:
+      - "8787:8787"
+    depends_on:
+      - "slurmctld"
+      - "postgres"
+    environment:
+      RSP_LICENSE: ${RSP_LICENSE}
+
+
+  rstudio2:
+    image: slurm-docker-cluster:${RSWB_VERSION:-2022.07.2-576.pro12}-slurm-${SLURM_VERSION:-22.05.4-1}
+    build:
+      context: .
+      dockerfile: Dockerfile.compile
+      args:
+        SLURM_VERSION: ${SLURM_VERSION:-22.05.4-1}
+        RSWB_VERSION: ${RSWB_VERSION:-2022.07.2-576.pro12}
+    command: ["rstudio"]
+    container_name: rstudio2
+    hostname: rstudio2
+    privileged: true
+    volumes:
+      - etc_munge:/etc/munge
+      - etc_slurm:/etc/slurm
+      - slurm_jobdir:/data
+      - var_log_slurm:/var/log/slurm
+      - home:/home
+    expose:
+      - "8787"
     ports:
       - "8788:8787"
     depends_on:
-      - "slurmdbd"
+      - "slurmctld"
       - "postgres"
     environment:
       RSP_LICENSE: ${RSP_LICENSE}
@@ -123,8 +147,7 @@ services:
     expose:
       - "6818"
     depends_on:
-      - "slurmctld1"
-      - "slurmctld2"
+      - "slurmctld"
 
   c2:
     image: slurm-docker-cluster:${RSWB_VERSION:-2022.07.2-576.pro12}-slurm-${SLURM_VERSION:-22.05.4-1}
@@ -147,10 +170,7 @@ services:
     expose:
       - "6818"
     depends_on:
-      - "slurmctld1"
-      - "slurmctld2"
-
-
+      - "slurmctld"
 
 
 volumes:

@@ -26,7 +26,8 @@ RUN apt-get update -y && \
 		rm -f r-${R_VERSION}_1_amd64.deb && \
 		/opt/R/$R_VERSION/bin/Rscript /tmp/create.R ;\
 	done && \
-	curl -O https://download2.rstudio.org/server/bionic/amd64/rstudio-workbench-${RSWB_VERSION}-amd64.deb && \
+	#curl -O https://download2.rstudio.org/server/bionic/amd64/rstudio-workbench-${RSWB_VERSION}-amd64.deb && \
+        curl -O https://s3.amazonaws.com/rstudio-ide-build/server/bionic/amd64/rstudio-workbench-${RSWB_VERSION}-amd64.deb && \
 	gdebi -n rstudio-workbench-${RSWB_VERSION}-amd64.deb && \
 	rm -f rstudio-workbench-${RSWB_VERSION}-amd64.deb && \
     	apt clean all && \

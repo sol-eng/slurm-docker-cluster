@@ -120,5 +120,5 @@ To remove all containers and volumes, run:
 ```console
 docker-compose down
 docker volume ls  | grep slurm-docker-cluster | \
-	awk '{print $2}' | args docker volume rm 
+	awk '{print $2}' | xargs docker volume rm 
 ```

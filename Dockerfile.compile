@@ -158,6 +158,11 @@ RUN set -ex \
     && apt clean all \
     && rm -rf /var/cache/apt
 
+RUN set -ex \
+    && apt-get update \
+    && apt-get -y install libcgroup-dev \
+    && apt clean all \
+    && rm -rf /var/cache/apt
 
 ## Build SLURM from source and add folders and permissions
 RUN mkdir -p /tmp/build && cd /tmp/build \

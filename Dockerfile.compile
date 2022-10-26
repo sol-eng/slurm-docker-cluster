@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 LABEL org.opencontainers.image.source="https://github.com/michaelmayer2/slurm-docker-cluster" \
       org.opencontainers.image.title="slurm-docker-cluster" \
@@ -21,13 +21,13 @@ RUN apt-get update -y && \
 	apt-get install -y gdebi-core curl wget && \ 
 	IFS=" "; for R_VERSION in $R_VERSIONS ; \
 	do \
-		curl -O https://cdn.rstudio.com/r/ubuntu-2004/pkgs/r-${R_VERSION}_1_amd64.deb && \
+		curl -O https://cdn.rstudio.com/r/ubuntu-2204/pkgs/r-${R_VERSION}_1_amd64.deb && \
 		gdebi -n r-${R_VERSION}_1_amd64.deb && \
 		rm -f r-${R_VERSION}_1_amd64.deb && \
 		/opt/R/$R_VERSION/bin/Rscript /tmp/create.R ;\
 	done && \
-	#curl -O https://download2.rstudio.org/server/bionic/amd64/rstudio-workbench-${RSWB_VERSION}-amd64.deb && \
-        curl -O https://s3.amazonaws.com/rstudio-ide-build/server/bionic/amd64/rstudio-workbench-${RSWB_VERSION}-amd64.deb && \
+	#curl -O https://download2.rstudio.org/server/jammy/amd64/rstudio-workbench-${RSWB_VERSION}-amd64.deb && \
+        curl -O https://s3.amazonaws.com/rstudio-ide-build/server/jammy/amd64/rstudio-workbench-${RSWB_VERSION}-amd64.deb && \
 	gdebi -n rstudio-workbench-${RSWB_VERSION}-amd64.deb && \
 	rm -f rstudio-workbench-${RSWB_VERSION}-amd64.deb && \
     	apt clean all && \
@@ -71,7 +71,7 @@ RUN openssl rsa -in /etc/rstudio/launcher.pem \
 ### Install Python  -------------------------------------------------------------#
 
 ARG PYTHON_VERSION=3.8.10
-RUN curl -O https://cdn.rstudio.com/python/ubuntu-2004/pkgs/python-${PYTHON_VERSION}_1_amd64.deb && \
+RUN curl -O https://cdn.rstudio.com/python/ubuntu-2204/pkgs/python-${PYTHON_VERSION}_1_amd64.deb && \
     apt-get update && gdebi -n python-${PYTHON_VERSION}_1_amd64.deb && apt clean all && \
     rm -rf /var/cache/apt && rm -f python-${PYTHON_VERSION}_1_amd64.deb && \
     /opt/python/${PYTHON_VERSION}/bin/pip install \
@@ -90,7 +90,7 @@ RUN /opt/python/${PYTHON_VERSION}/bin/jupyter-nbextension install --sys-prefix -
     /opt/python/${PYTHON_VERSION}/bin/jupyter-serverextension enable --sys-prefix --py rsconnect_jupyter
 
 ARG PYTHON_VERSION_ALT=3.9.5
-RUN curl -O https://cdn.rstudio.com/python/ubuntu-2004/pkgs/python-${PYTHON_VERSION_ALT}_1_amd64.deb && \
+RUN curl -O https://cdn.rstudio.com/python/ubuntu-2204/pkgs/python-${PYTHON_VERSION_ALT}_1_amd64.deb && \
     apt-get update && gdebi -n python-${PYTHON_VERSION_ALT}_1_amd64.deb && apt clean all && \
     rm -rf /var/cache/apt && rm -f python-${PYTHON_VERSION_ALT}_1_amd64.deb && \
     /opt/python/${PYTHON_VERSION_ALT}/bin/pip install \
@@ -145,7 +145,6 @@ RUN set -ex \
        python-is-python3 \
        python3.8-dev \
        python3-pip \
-       cython \
        cython3 \
        mariadb-server \
        mariadb-client \
@@ -153,8 +152,8 @@ RUN set -ex \
        psmisc \
        bash-completion \
        vim \
-       python-nose \
-       cython \
+       python3-nose \
+       #libdbus-1-dev \
     && apt clean all \
     && rm -rf /var/cache/apt
 
@@ -196,12 +195,18 @@ RUN mkdir -p /tmp/build && cd /tmp/build \
         /var/lib/slurmd/qos_usage \
         /var/lib/slurmd/fed_mgr_state \
     && chown -R slurm:slurm /var/*/slurm* \
-    && /sbin/create-munge-key -f
+    && /usr/sbin/mungekey -c -f
 
 COPY slurm/slurm.conf /etc/slurm/slurm.conf
 COPY slurm/slurmdbd.conf /etc/slurm/slurmdbd.conf
 
+RUN echo "CgroupAutomount=yes \n\
+CgroupPlugin=cgroup/v1 \n\
+ConstrainCores=yes \n\
+ConstrainRAMSpace=yes" > /etc/slurm/cgroup.conf
+
 RUN chmod 0600 /etc/slurm/slurmdbd.conf
+RUN chown 105:105 /etc/munge/munge.key 
 
 ## Configure a mail client and add a couple of nice to have tools
 

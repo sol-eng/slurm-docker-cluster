@@ -29,7 +29,7 @@ biocvers <- BiocManager::version()
 r<-gsub("https://bioconductor.org", paste0(pm,"/bioconductor"), BiocManager::repositories(version=biocvers))
 
 # CRAN repo
-r["CRAN"] <- paste0(pm,"/cran/latest/")
+r["CRAN"] <- paste0(pm,"/cran/__linux__/jammy/latest/")
 
 nr=length(r)
 r<-c(r[nr],r[1:nr-1])

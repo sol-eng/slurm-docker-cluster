@@ -19,13 +19,14 @@ The compose file will run the following containers:
 
 The compose file will create the following named volumes:
 
-* etc_munge         ( -> /etc/munge     )
-* etc_slurm         ( -> /etc/slurm     )
-* slurm_jobdir      ( -> /data          )
-* var_lib_mysql     ( -> /var/lib/mysql )
-* var_libpostgres     ( -> /var/lib/postgres )
-* var_log_slurm     ( -> /var/log/slurm )
-* home	( -> /home )
+* etc_munge         	 ( -> /etc/munge     )
+* etc_slurm         	 ( -> /etc/slurm     )
+* slurm_jobdir      	 ( -> /data          )
+* var_lib_mysql     	 ( -> /var/lib/mysql )
+* var_libpostgres     	 ( -> /var/lib/postgres )
+* var_log_slurm     	 ( -> /var/log/slurm )
+* home	 		 ( -> /home )
+* var_lib_rstudio_server ( -> /var/lib/rstudio-server )
 
 ## General Architecture
 
@@ -122,3 +123,17 @@ docker-compose down
 docker volume ls  | grep slurm-docker-cluster | \
 	awk '{print $2}' | xargs docker volume rm 
 ```
+
+## Singularity/Apptainer Support
+
+Support for Singularity/Apptainer is preconfigured. The SLURM CLI commands `sbatch` and `srun` take two additional command line switches, `--singularity-container-image` and `--singularity-container-path`. This is done via the `singularity-exec` plugin. 
+
+RStudio Workbench is configured in `launcher.slurm.conf` to use `--singularity-container-image` via the `Constraints` setting. By default, all containers need to be stored in `/opt/apptainer/containers` within the docker container. This path is mapped onto `./singularity/containers`. Before starting to use this feature, you will need to pull an `r-session-complete` image from dockerhub into this folder, e.g. 
+
+```
+singularity pull docker://rstudio/r-session-complete:jammy-2022.07.2-576.pro12
+```
+
+The `singularity-exec` SLURM plugin has been configured so that all essential folders that allow SLURM job submission from within the Singularity container (it bind mounts the folders `/var/run/munge`, `/var/spool/slurmd`, `/etc/munge` and `/run/munge`) as well as communication with RStudio Workbench server processes (bind mounts of `/etc/rstudio`and `/var/lib/rstudio-server`) are available. See `singularity-exec.conf` in `/etc/slurm/plugstack.conf.d`).
+
+Note: As a user, you will need to know the full name of the singularity image. There is no pull-down menu at the moment for this feature. 

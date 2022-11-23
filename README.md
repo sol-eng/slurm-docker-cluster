@@ -52,7 +52,7 @@ If you wanted to use a different RStudio Workbench and SLURM version, you can se
 
 ```console
 export RSWB_VERSION="2022.11.0-daily-206.pro5"
-export SLURM_VERSION="20.02.4-1"
+export SLURM_VERSION="22.05.4-1"
 
 ```                                                  
 

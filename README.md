@@ -76,7 +76,7 @@ Once the cluster is up and running, RSWB is available at http://localhost:8787 a
 Use `docker-compose exec` to run a bash shell on the controller container:
 
 ```console
-docker-compose exec slurmctld bash
+docker compose exec slurmctld bash
 ```
 
 From the shell, execute slurm commands, for example:

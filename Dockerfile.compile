@@ -113,10 +113,10 @@ COPY rstudio/jupyter.conf /etc/rstudio/jupyter.conf
 
 #### Install VSCode code-server --------------------------------------------------#
 
-RUN rstudio-server install-vs-code /opt/code-server/
+#RUN rstudio-server install-vs-code /opt/code-server/
 
-COPY rstudio/vscode.conf /etc/rstudio/vscode.conf
-COPY rstudio/vscode-user-settings.json  /etc/rstudio/vscode-user-settings.json
+#COPY rstudio/vscode.conf /etc/rstudio/vscode.conf
+#COPY rstudio/vscode-user-settings.json  /etc/rstudio/vscode-user-settings.json
 
 
 ## Install SLURM

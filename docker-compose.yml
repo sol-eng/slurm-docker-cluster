@@ -27,7 +27,7 @@ services:
       - "5432"
 
   slurmdbd:
-    image: slurm-docker-cluster:${RSWB_VERSION:-2022.07.2-576.pro12}-${SLURM_VERSION:-slurm-22.05.4-1}
+    image: slurm-docker-cluster:${RSWB_VERSION:-2022.07.2-576.pro12}-slurm-${SLURM_VERSION:-22.05.4-1}
     build:
       context: .
       dockerfile: Dockerfile.compile 

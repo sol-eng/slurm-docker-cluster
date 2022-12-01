@@ -6,7 +6,6 @@ LABEL org.opencontainers.image.source="https://github.com/michaelmayer2/slurm-do
       org.label-schema.docker.cmd="docker-compose up -d" \
       maintainer="Michael Mayer"
 
-ARG SLURM_VERSION
 ARG GOSU_VERSION=1.11
 ARG R_VERSIONS="3.6.3 4.0.5 4.1.2"
 ARG RSWB_VERSION
@@ -26,7 +25,6 @@ RUN apt-get update -y && \
 		rm -f r-${R_VERSION}_1_amd64.deb && \
 		/opt/R/$R_VERSION/bin/Rscript /tmp/create.R ;\
 	done && \
-	#curl -O https://download2.rstudio.org/server/jammy/amd64/rstudio-workbench-${RSWB_VERSION}-amd64.deb && \
         curl -O https://s3.amazonaws.com/rstudio-ide-build/server/jammy/amd64/rstudio-workbench-${RSWB_VERSION}-amd64.deb && \
 	gdebi -n rstudio-workbench-${RSWB_VERSION}-amd64.deb && \
 	rm -f rstudio-workbench-${RSWB_VERSION}-amd64.deb && \
@@ -163,6 +161,8 @@ RUN set -ex \
     && apt clean all \
     && rm -rf /var/cache/apt
 
+ARG SLURM_VERSION
+
 ## Build SLURM from source and add folders and permissions
 RUN mkdir -p /tmp/build && cd /tmp/build \
     && bash -c "git clone --depth 1 -b slurm-\${SLURM_VERSION//./-} https://github.com/SchedMD/slurm.git" \
@@ -201,7 +201,7 @@ COPY slurm/slurm.conf /etc/slurm/slurm.conf
 COPY slurm/slurmdbd.conf /etc/slurm/slurmdbd.conf
 
 RUN echo "CgroupAutomount=yes \n\
-CgroupPlugin=cgroup/v1 \n\
+#CgroupPlugin=cgroup/v1 \n\
 ConstrainCores=yes \n\
 ConstrainRAMSpace=yes" > /etc/slurm/cgroup.conf
 

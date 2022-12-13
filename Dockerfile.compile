@@ -71,34 +71,35 @@ RUN openssl rsa -in /etc/rstudio/launcher.pem \
 ARG PYTHON_VERSION=3.8.10
 RUN curl -O https://cdn.rstudio.com/python/ubuntu-2204/pkgs/python-${PYTHON_VERSION}_1_amd64.deb && \
     apt-get update && gdebi -n python-${PYTHON_VERSION}_1_amd64.deb && apt clean all && \
-    rm -rf /var/cache/apt && rm -f python-${PYTHON_VERSION}_1_amd64.deb && \
-    /opt/python/${PYTHON_VERSION}/bin/pip install \
-         jupyter==1.0.0 \
-        'jupyterlab<3.0.0' \
-        rsp_jupyter \
-        rsconnect_jupyter && \
-    /opt/python/${PYTHON_VERSION}/bin/python -m ipykernel install --name py${PYTHON_VERSION} --display-name "Python ${PYTHON_VERSION}" 
+    rm -rf /var/cache/apt && rm -f python-${PYTHON_VERSION}_1_amd64.deb
 
-### Install RSW/RSC Notebook Extensions --------------------#
+RUN /opt/python/${PYTHON_VERSION}/bin/pip install \
+    jupyter \
+    jupyterlab \
+    workbench_jupyterlab \
+    rsp_jupyter \
+    rsconnect_jupyter \
+    rsconnect_python 
 
 RUN /opt/python/${PYTHON_VERSION}/bin/jupyter-nbextension install --sys-prefix --py rsp_jupyter && \
     /opt/python/${PYTHON_VERSION}/bin/jupyter-nbextension enable --sys-prefix --py rsp_jupyter && \
     /opt/python/${PYTHON_VERSION}/bin/jupyter-nbextension install --sys-prefix --py rsconnect_jupyter && \
     /opt/python/${PYTHON_VERSION}/bin/jupyter-nbextension enable --sys-prefix --py rsconnect_jupyter && \
     /opt/python/${PYTHON_VERSION}/bin/jupyter-serverextension enable --sys-prefix --py rsconnect_jupyter
+ 
 
 ARG PYTHON_VERSION_ALT=3.9.5
 RUN curl -O https://cdn.rstudio.com/python/ubuntu-2204/pkgs/python-${PYTHON_VERSION_ALT}_1_amd64.deb && \
     apt-get update && gdebi -n python-${PYTHON_VERSION_ALT}_1_amd64.deb && apt clean all && \
-    rm -rf /var/cache/apt && rm -f python-${PYTHON_VERSION_ALT}_1_amd64.deb && \
-    /opt/python/${PYTHON_VERSION_ALT}/bin/pip install \
-         jupyter==1.0.0 \
-        'jupyterlab<3.0.0' \
-        rsp_jupyter \
-        rsconnect_jupyter && \
-    /opt/python/${PYTHON_VERSION_ALT}/bin/python -m ipykernel install --name py${PYTHON_VERSION_ALT} --display-name "Python ${PYTHON_VERSION_ALT}"
+    rm -rf /var/cache/apt && rm -f python-${PYTHON_VERSION_ALT}_1_amd64.deb
 
-### Install RSW/RSC Notebook Extensions --------------------#
+RUN /opt/python/${PYTHON_VERSION_ALT}/bin/pip install \
+    jupyter \
+    jupyterlab \
+    workbench_jupyterlab \
+    rsp_jupyter \
+    rsconnect_jupyter \
+    rsconnect_python 
 
 RUN /opt/python/${PYTHON_VERSION_ALT}/bin/jupyter-nbextension install --sys-prefix --py rsp_jupyter && \
     /opt/python/${PYTHON_VERSION_ALT}/bin/jupyter-nbextension enable --sys-prefix --py rsp_jupyter && \
@@ -111,11 +112,11 @@ COPY rstudio/jupyter.conf /etc/rstudio/jupyter.conf
 
 #### Install VSCode code-server --------------------------------------------------#
 
-#RUN rstudio-server install-vs-code /opt/code-server/
+COPY rstudio/vscode.conf /etc/rstudio/vscode.conf
+COPY rstudio/vscode-user-settings.json  /etc/rstudio/vscode-user-settings.json
 
-#COPY rstudio/vscode.conf /etc/rstudio/vscode.conf
-#COPY rstudio/vscode-user-settings.json  /etc/rstudio/vscode-user-settings.json
-
+# Install VSCode based on the PWB version. 
+RUN /bin/bash -c "if ( rstudio-server | grep configure-vs-code ); then rm -f /etc/rstudio/vscode* ; rstudio-server configure-vs-code ; rstudio-server install-vs-code-ext; else rstudio-server install-vs-code /opt/code-server/; fi"
 
 ## Install SLURM
 

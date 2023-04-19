@@ -25,6 +25,10 @@ RUN apt-get update -y && \
 		rm -f r-${R_VERSION}_1_amd64.deb && \
 		/opt/R/$R_VERSION/bin/Rscript /tmp/create.R ;\
 	done && \
+	apt clean all && \
+        rm -rf /var/cache/apt
+RUN apt-get update -y && groupadd  -g 999 rstudio-server && \ 
+   	useradd -g 999 -m -u 999 -s /bin/bash rstudio-server && \
         curl -O https://s3.amazonaws.com/rstudio-ide-build/server/jammy/amd64/rstudio-workbench-${RSWB_VERSION}-amd64.deb && \
 	gdebi -n rstudio-workbench-${RSWB_VERSION}-amd64.deb && \
 	rm -f rstudio-workbench-${RSWB_VERSION}-amd64.deb && \
@@ -112,11 +116,10 @@ COPY rstudio/jupyter.conf /etc/rstudio/jupyter.conf
 
 #### Install VSCode code-server --------------------------------------------------#
 
-COPY rstudio/vscode.conf /etc/rstudio/vscode.conf
-COPY rstudio/vscode-user-settings.json  /etc/rstudio/vscode-user-settings.json
-
+#COPY rstudio/vscode.conf /etc/rstudio/vscode.conf
+#COPY rstudio/vscode-user-settings.json  /etc/rstudio/vscode-user-settings.json
 # Install VSCode based on the PWB version. 
-RUN /bin/bash -c "if ( rstudio-server | grep configure-vs-code ); then rm -f /etc/rstudio/vscode* ; rstudio-server configure-vs-code ; rstudio-server install-vs-code-ext; else rstudio-server install-vs-code /opt/code-server/; fi"
+RUN /bin/bash -c "if ( rstudio-server | grep configure-vs-code ); then rstudio-server configure-vs-code ; rstudio-server install-vs-code-ext; else rstudio-server install-vs-code /opt/code-server/; fi"
 
 ## Install SLURM
 

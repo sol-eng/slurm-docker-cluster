@@ -77,6 +77,8 @@ RUN curl -O https://cdn.rstudio.com/python/ubuntu-2204/pkgs/python-${PYTHON_VERS
     apt-get update && gdebi -n python-${PYTHON_VERSION}_1_amd64.deb && apt clean all && \
     rm -rf /var/cache/apt && rm -f python-${PYTHON_VERSION}_1_amd64.deb
 
+RUN /opt/python/${PYTHON_VERSION}/bin/pip install --upgrade pip 
+
 RUN /opt/python/${PYTHON_VERSION}/bin/pip install \
     jupyter \
     jupyterlab \
@@ -96,6 +98,8 @@ ARG PYTHON_VERSION_ALT=3.9.5
 RUN curl -O https://cdn.rstudio.com/python/ubuntu-2204/pkgs/python-${PYTHON_VERSION_ALT}_1_amd64.deb && \
     apt-get update && gdebi -n python-${PYTHON_VERSION_ALT}_1_amd64.deb && apt clean all && \
     rm -rf /var/cache/apt && rm -f python-${PYTHON_VERSION_ALT}_1_amd64.deb
+
+RUN /opt/python/${PYTHON_VERSION_ALT}/bin/pip install --upgrade pip
 
 RUN /opt/python/${PYTHON_VERSION_ALT}/bin/pip install \
     jupyter \

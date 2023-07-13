@@ -1,8 +1,11 @@
-FROM ubuntu:22.04
+ARG DIST="focal"
+ARG DISTNUM="2004"
+
+FROM ubuntu:${DIST}
 
 LABEL org.opencontainers.image.source="https://github.com/michaelmayer2/slurm-docker-cluster" \
       org.opencontainers.image.title="slurm-docker-cluster" \
-      org.opencontainers.image.description="Slurm Docker cluster on Ububtu 20.04 LTS" \
+      org.opencontainers.image.description="Slurm Docker cluster on Ubuntu ${DIST} LTS" \
       org.label-schema.docker.cmd="docker-compose up -d" \
       maintainer="Michael Mayer"
 
@@ -10,7 +13,8 @@ ARG GOSU_VERSION=1.11
 ARG R_VERSIONS="3.6.3 4.0.5 4.1.2"
 ARG RSWB_VERSION
 ARG PROXY
-
+ARG DIST="focal"
+ARG DISTNUM="2004"
 
 # Install and configure R and RStudio Workbench
 
@@ -20,7 +24,7 @@ RUN apt-get update -y && \
 	apt-get install -y gdebi-core curl wget && \ 
 	IFS=" "; for R_VERSION in $R_VERSIONS ; \
 	do \
-		curl -O https://cdn.rstudio.com/r/ubuntu-2204/pkgs/r-${R_VERSION}_1_amd64.deb && \
+		curl -O https://cdn.rstudio.com/r/ubuntu-${DISTNUM}/pkgs/r-${R_VERSION}_1_amd64.deb && \
 		gdebi -n r-${R_VERSION}_1_amd64.deb && \
 		rm -f r-${R_VERSION}_1_amd64.deb && \
 		/opt/R/$R_VERSION/bin/Rscript /tmp/create.R ;\
@@ -29,11 +33,12 @@ RUN apt-get update -y && \
         rm -rf /var/cache/apt
 RUN apt-get update -y && groupadd  -g 999 rstudio-server && \ 
    	useradd -g 999 -m -u 999 -s /bin/bash rstudio-server && \
-        curl -O https://s3.amazonaws.com/rstudio-ide-build/server/jammy/amd64/rstudio-workbench-${RSWB_VERSION}-amd64.deb && \
+        curl -O https://s3.amazonaws.com/rstudio-ide-build/server/${DIST}/amd64/rstudio-workbench-${RSWB_VERSION}-amd64.deb && \
 	gdebi -n rstudio-workbench-${RSWB_VERSION}-amd64.deb && \
 	rm -f rstudio-workbench-${RSWB_VERSION}-amd64.deb && \
     	apt clean all && \
     	rm -rf /var/cache/apt
+
 
 COPY rstudio/launcher.conf /etc/rstudio/launcher.conf
 COPY rstudio/launcher.slurm.conf /etc/rstudio/launcher.slurm.conf
@@ -73,7 +78,7 @@ RUN openssl rsa -in /etc/rstudio/launcher.pem \
 ### Install Python  -------------------------------------------------------------#
 
 ARG PYTHON_VERSION=3.8.10
-RUN curl -O https://cdn.rstudio.com/python/ubuntu-2204/pkgs/python-${PYTHON_VERSION}_1_amd64.deb && \
+RUN curl -O https://cdn.rstudio.com/python/ubuntu-${DISTNUM}/pkgs/python-${PYTHON_VERSION}_1_amd64.deb && \
     apt-get update && gdebi -n python-${PYTHON_VERSION}_1_amd64.deb && apt clean all && \
     rm -rf /var/cache/apt && rm -f python-${PYTHON_VERSION}_1_amd64.deb
 
@@ -95,7 +100,7 @@ RUN /opt/python/${PYTHON_VERSION}/bin/jupyter-nbextension install --sys-prefix -
  
 
 ARG PYTHON_VERSION_ALT=3.9.5
-RUN curl -O https://cdn.rstudio.com/python/ubuntu-2204/pkgs/python-${PYTHON_VERSION_ALT}_1_amd64.deb && \
+RUN curl -O https://cdn.rstudio.com/python/ubuntu-${DISTNUM}/pkgs/python-${PYTHON_VERSION_ALT}_1_amd64.deb && \
     apt-get update && gdebi -n python-${PYTHON_VERSION_ALT}_1_amd64.deb && apt clean all && \
     rm -rf /var/cache/apt && rm -f python-${PYTHON_VERSION_ALT}_1_amd64.deb
 
@@ -202,8 +207,9 @@ RUN mkdir -p /tmp/build && cd /tmp/build \
         /var/lib/slurmd/assoc_usage \
         /var/lib/slurmd/qos_usage \
         /var/lib/slurmd/fed_mgr_state \
-    && chown -R slurm:slurm /var/*/slurm* \
-    && /usr/sbin/mungekey -c -f
+    && chown -R slurm:slurm /var/*/slurm* 
+
+RUN if [ -f /usr/sbin/create-munge-key ]; then /usr/sbin/create-munge-key ; else /usr/sbin/mungekey -c -f; fi 
 
 COPY slurm/slurm.conf /etc/slurm/slurm.conf
 COPY slurm/slurmdbd.conf /etc/slurm/slurmdbd.conf

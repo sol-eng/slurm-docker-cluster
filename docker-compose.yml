@@ -27,13 +27,15 @@ services:
       - "5432"
 
   slurmdbd:
-    image: slurm-docker-cluster:${RSWB_VERSION:-2022.07.2-576.pro12}-slurm-${SLURM_VERSION:-22.05.4-1}
+    image: slurm-docker-cluster:${RSWB_VERSION:-2022.07.2-576.pro12}-slurm-${SLURM_VERSION:-22.05.4-1}-${DIST:-jammy}
     build:
       context: .
       dockerfile: Dockerfile.compile 
       args:
         SLURM_VERSION: ${SLURM_VERSION:-22.05.4-1}
         RSWB_VERSION: ${RSWB_VERSION:-2022.07.2-576.pro12}
+        DIST: ${DIST:-jammy}
+        DISTNUM: ${DISTNUM:-2204}
     command: ["slurmdbd"]
     container_name: slurm-slurmdbd
     hostname: slurmdbd
@@ -47,13 +49,15 @@ services:
       - mysql
 
   slurmctld:
-    image: slurm-docker-cluster:${RSWB_VERSION:-2022.07.2-576.pro12}-slurm-${SLURM_VERSION:-22.05.4-1}
+    image: slurm-docker-cluster:${RSWB_VERSION:-2022.07.2-576.pro12}-slurm-${SLURM_VERSION:-22.05.4-1}-${DIST:-jammy}
     build:
       context: .
       dockerfile: Dockerfile.compile
       args:
         SLURM_VERSION: ${SLURM_VERSION:-22.05.4-1}
         RSWB_VERSION: ${RSWB_VERSION:-2022.07.2-576.pro12}
+        DIST: ${DIST:-jammy}
+        DISTNUM: ${DISTNUM:-2204}
     command: ["slurmctld"]
     container_name: slurm-slurmctld
     hostname: slurmctld
@@ -70,13 +74,15 @@ services:
       - "slurmdbd"
 
   rstudio1:
-    image: slurm-docker-cluster:${RSWB_VERSION:-2022.07.2-576.pro12}-slurm-${SLURM_VERSION:-22.05.4-1}
+    image: slurm-docker-cluster:${RSWB_VERSION:-2022.07.2-576.pro12}-slurm-${SLURM_VERSION:-22.05.4-1}-${DIST:-jammy}
     build:
       context: .
       dockerfile: Dockerfile.compile
       args:
         SLURM_VERSION: ${SLURM_VERSION:-22.05.4-1}
         RSWB_VERSION: ${RSWB_VERSION:-2022.07.2-576.pro12}
+        DIST: ${DIST:-jammy}
+        DISTNUM: ${DISTNUM:-2204}
     command: ["rstudio"]
     container_name: slurm-rstudio1
     hostname: rstudio1
@@ -101,13 +107,15 @@ services:
 
 
   rstudio2:
-    image: slurm-docker-cluster:${RSWB_VERSION:-2022.07.2-576.pro12}-slurm-${SLURM_VERSION:-22.05.4-1}
+    image: slurm-docker-cluster:${RSWB_VERSION:-2022.07.2-576.pro12}-slurm-${SLURM_VERSION:-22.05.4-1}-${DIST:-jammy}
     build:
       context: .
       dockerfile: Dockerfile.compile
       args:
         SLURM_VERSION: ${SLURM_VERSION:-22.05.4-1}
         RSWB_VERSION: ${RSWB_VERSION:-2022.07.2-576.pro12}
+        DIST: ${DIST:-jammy}
+        DISTNUM: ${DISTNUM:-2204}
     command: ["rstudio"]
     container_name: slurm-rstudio2
     hostname: rstudio2
@@ -131,13 +139,15 @@ services:
       RSP_LICENSE: ${RSP_LICENSE}
 
   c1:
-    image: slurm-docker-cluster:${RSWB_VERSION:-2022.07.2-576.pro12}-slurm-${SLURM_VERSION:-22.05.4-1}
+    image: slurm-docker-cluster:${RSWB_VERSION:-2022.07.2-576.pro12}-slurm-${SLURM_VERSION:-22.05.4-1}-${DIST:-jammy}
     build:
       context: .
       dockerfile: Dockerfile.compile
       args:
         SLURM_VERSION: ${SLURM_VERSION:-22.05.4-1}
         RSWB_VERSION: ${RSWB_VERSION:-2022.07.2-576.pro12}
+        DIST: ${DIST:-jammy}
+        DISTNUM: ${DISTNUM:-2204}
     command: ["slurmd"]
     hostname: c1
     container_name: slurm-c1
@@ -156,13 +166,15 @@ services:
       - "slurmctld"
 
   c2:
-    image: slurm-docker-cluster:${RSWB_VERSION:-2022.07.2-576.pro12}-slurm-${SLURM_VERSION:-22.05.4-1}
+    image: slurm-docker-cluster:${RSWB_VERSION:-2022.07.2-576.pro12}-slurm-${SLURM_VERSION:-22.05.4-1}-${DIST:-jammy}
     build:
       context: .
       dockerfile: Dockerfile.compile
       args:
         SLURM_VERSION: ${SLURM_VERSION:-22.05.4-1}
         RSWB_VERSION: ${RSWB_VERSION:-2022.07.2-576.pro12}
+        DIST: ${DIST:-jammy}
+        DISTNUM: ${DISTNUM:-2204}
     command: ["slurmd"]
     hostname: c2
     container_name: slurm-c2

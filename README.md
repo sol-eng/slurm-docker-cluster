@@ -46,12 +46,12 @@ The setup uses one single docker image named `slurm-docker-cluster`. You can bui
 ```console
 docker-compose build 
 ```
-which will build the `slurm-docker-cluster` using default values for the versions of RStudio Workbench (2022.07.2-576.pro12) and SLURM (22.05.4-1) and for Ubuntu 22.04 LTS (Focal).
+which will build the `slurm-docker-cluster` using default values for the versions of RStudio Workbench (2023.12.1-402.pro1) and SLURM (23.11.3) and for Ubuntu 22.04 LTS (Focal).
 
-If you wanted to use a different RStudio Workbench and SLURM version (or a different Ubuntu LTS version), you can set the environment variables `RSWB_VERSION`, `SLURM_VERSION`, `DIST` and `DISTNUM`to your desired Workbench and SLURM version. e.g. 
+If you wanted to use a different Posit Workbench and SLURM version (or a different Ubuntu LTS version), you can set the environment variables `PWB_VERSION`, `SLURM_VERSION`, `DIST` and `DISTNUM`to your desired Workbench and SLURM version. e.g. 
 
 ```console
-export RSWB_VERSION="2023.09.0-daily-203.pro2"
+export PWB_VERSION="2023.09.0-daily-203.pro2"
 export SLURM_VERSION="23.02.3-1" 
 export DIST="jammy"
 export DISTNUM="2204"
@@ -66,11 +66,11 @@ Run `docker-compose` to instantiate the cluster:
 docker-compose up -d
 ```
 
-Note: Make sure you have the environment variable `RSP_LICENSE` set to a valid license key for RStudio Workbench.  
+Note: Make sure you have the environment variable `RSP_LICENSE` set to a valid license key for Posit Workbench.  
 
 ## RStudio Workbench availability
 
-Once the cluster is up and running, RSWB is available at http://localhost:8787 and http://localhost:8788
+Once the cluster is up and running, RSWB is available at http://localhost:8788 and http://localhost:8789
 
 ## Accessing the Cluster
 
@@ -124,17 +124,3 @@ docker-compose down
 docker volume ls  | grep slurm-docker-cluster | \
 	awk '{print $2}' | xargs docker volume rm 
 ```
-
-## Singularity/Apptainer Support
-
-Support for Singularity/Apptainer is preconfigured. The SLURM CLI commands `sbatch` and `srun` take two additional command line switches, `--singularity-container-image` and `--singularity-container-path`. This is done via the `singularity-exec` plugin. 
-
-RStudio Workbench is configured in `launcher.slurm.conf` to use `--singularity-container-image` via the `Constraints` setting. By default, all containers need to be stored in `/opt/apptainer/containers` within the docker container. This path is mapped onto `./singularity/containers`. Before starting to use this feature, you will need to pull an `r-session-complete` image from dockerhub into this folder, e.g. 
-
-```
-singularity pull docker://rstudio/r-session-complete:jammy-2022.07.2-576.pro12
-```
-
-The `singularity-exec` SLURM plugin has been configured so that all essential folders that allow SLURM job submission from within the Singularity container (it bind mounts the folders `/var/run/munge`, `/var/spool/slurmd`, `/etc/munge` and `/run/munge`) as well as communication with RStudio Workbench server processes (bind mounts of `/etc/rstudio`and `/var/lib/rstudio-server`) are available. See `singularity-exec.conf` in `/etc/slurm/plugstack.conf.d`).
-
-Note: As a user, you will need to know the full name of the singularity image. There is no pull-down menu at the moment for this feature. 

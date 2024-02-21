@@ -10,15 +10,16 @@ LABEL org.opencontainers.image.source="https://github.com/michaelmayer2/slurm-do
       maintainer="Michael Mayer"
 
 ARG GOSU_VERSION=1.11
-ARG R_VERSIONS="3.6.3 4.0.5 4.1.2"
-ARG RSWB_VERSION
+ARG R_VERSIONS="3.6.3 4.3.2"
 ARG PROXY
 ARG DIST="focal"
 ARG DISTNUM="2004"
 
+
 # Install and configure R and RStudio Workbench
 
 COPY rstudio/create.R /tmp/create.R 
+
 
 RUN apt-get update -y && \
 	apt-get install -y gdebi-core curl wget && \ 
@@ -31,13 +32,23 @@ RUN apt-get update -y && \
 	done && \
 	apt clean all && \
         rm -rf /var/cache/apt
+   
+ARG PWB_VERSION
 RUN apt-get update -y && groupadd  -g 999 rstudio-server && \ 
    	useradd -g 999 -m -u 999 -s /bin/bash rstudio-server && \
-        curl -O https://s3.amazonaws.com/rstudio-ide-build/server/${DIST}/amd64/rstudio-workbench-${RSWB_VERSION}-amd64.deb && \
-	gdebi -n rstudio-workbench-${RSWB_VERSION}-amd64.deb && \
-	rm -f rstudio-workbench-${RSWB_VERSION}-amd64.deb && \
+        curl -O https://s3.amazonaws.com/rstudio-ide-build/server/${DIST}/amd64/rstudio-workbench-${PWB_VERSION}-amd64.deb && \
+	gdebi -n rstudio-workbench-${PWB_VERSION}-amd64.deb && \
+	rm -f rstudio-workbench-${PWB_VERSION}-amd64.deb && \
     	apt clean all && \
     	rm -rf /var/cache/apt
+
+ARG LAUNCHER_VERSION
+RUN if [ ! -z ${LAUNCHER_VERSION} ]; then \
+    cd /tmp && \
+    curl -O https://cdn.rstudio.com/launcher/releases/jammy/launcher-jammy-amd64-2.16.0-136.tar.gz && \
+    tar xvfz launcher-* -C /usr/lib/rstudio-server/bin  --strip-components=1 && \
+    rm -f launcher-* ; \
+    fi
 
 
 COPY rstudio/launcher.conf /etc/rstudio/launcher.conf
@@ -77,7 +88,7 @@ RUN openssl rsa -in /etc/rstudio/launcher.pem \
 
 ### Install Python  -------------------------------------------------------------#
 
-ARG PYTHON_VERSION=3.8.10
+ARG PYTHON_VERSION=3.11.6
 RUN curl -O https://cdn.rstudio.com/python/ubuntu-${DISTNUM}/pkgs/python-${PYTHON_VERSION}_1_amd64.deb && \
     apt-get update && gdebi -n python-${PYTHON_VERSION}_1_amd64.deb && apt clean all && \
     rm -rf /var/cache/apt && rm -f python-${PYTHON_VERSION}_1_amd64.deb
@@ -97,28 +108,7 @@ RUN /opt/python/${PYTHON_VERSION}/bin/jupyter-nbextension install --sys-prefix -
     /opt/python/${PYTHON_VERSION}/bin/jupyter-nbextension install --sys-prefix --py rsconnect_jupyter && \
     /opt/python/${PYTHON_VERSION}/bin/jupyter-nbextension enable --sys-prefix --py rsconnect_jupyter && \
     /opt/python/${PYTHON_VERSION}/bin/jupyter-serverextension enable --sys-prefix --py rsconnect_jupyter
- 
 
-ARG PYTHON_VERSION_ALT=3.9.5
-RUN curl -O https://cdn.rstudio.com/python/ubuntu-${DISTNUM}/pkgs/python-${PYTHON_VERSION_ALT}_1_amd64.deb && \
-    apt-get update && gdebi -n python-${PYTHON_VERSION_ALT}_1_amd64.deb && apt clean all && \
-    rm -rf /var/cache/apt && rm -f python-${PYTHON_VERSION_ALT}_1_amd64.deb
-
-RUN /opt/python/${PYTHON_VERSION_ALT}/bin/pip install --upgrade pip
-
-RUN /opt/python/${PYTHON_VERSION_ALT}/bin/pip install \
-    jupyter \
-    jupyterlab \
-    workbench_jupyterlab \
-    rsp_jupyter \
-    rsconnect_jupyter \
-    rsconnect_python 
-
-RUN /opt/python/${PYTHON_VERSION_ALT}/bin/jupyter-nbextension install --sys-prefix --py rsp_jupyter && \
-    /opt/python/${PYTHON_VERSION_ALT}/bin/jupyter-nbextension enable --sys-prefix --py rsp_jupyter && \
-    /opt/python/${PYTHON_VERSION_ALT}/bin/jupyter-nbextension install --sys-prefix --py rsconnect_jupyter && \
-    /opt/python/${PYTHON_VERSION_ALT}/bin/jupyter-nbextension enable --sys-prefix --py rsconnect_jupyter && \
-    /opt/python/${PYTHON_VERSION_ALT}/bin/jupyter-serverextension enable --sys-prefix --py rsconnect_jupyter
 
 COPY rstudio/jupyter.conf /etc/rstudio/jupyter.conf
 
@@ -180,9 +170,13 @@ ARG SLURM_VERSION
 RUN mkdir -p /etc/slurm && mkdir -p /tmp/build && cd /tmp/build \
     && bash -c "git clone --depth 1 -b slurm-\${SLURM_VERSION//./-} https://github.com/SchedMD/slurm.git" \
     && cd slurm \
+    && echo "Configuring SLURM ${SLURM_VERSION}" \
     && bash -c "./configure --enable-debug --prefix=/usr --sysconfdir=/etc/slurm \
-        --with-mysql_config=/usr/bin  --libdir=/usr/lib64 >& /etc/slurm/.build.log\
-    && make install >& /etc/slurm/.install.log" \
+        --with-mysql_config=/usr/bin  --libdir=/usr/lib64 >& /etc/slurm/.build.log" \
+    && echo "Building SLURM ${SLURM_VERSION}" \
+    && bash -c "make -j 8 >& /etc/slurm/.build.log" \
+    && echo "Installing SLURM ${SLURM_VERSION}" \
+    && bash -c "make -j 8 install >& /etc/slurm/.install.log" \
     && install -D -m644 etc/cgroup.conf.example /etc/slurm/cgroup.conf.example \
     && install -D -m644 etc/slurm.conf.example /etc/slurm/slurm.conf.example \
     && install -D -m644 etc/slurmdbd.conf.example /etc/slurm/slurmdbd.conf.example \
@@ -221,24 +215,6 @@ ConstrainRAMSpace=yes" > /etc/slurm/cgroup.conf
 
 RUN chmod 0600 /etc/slurm/slurmdbd.conf
 RUN chown 105:105 /etc/munge/munge.key 
-
-## Add Singularity Integration
-
-RUN mkdir -p /tmp/singularity
-COPY singularity/spank/* /tmp/singularity/
-RUN cd /tmp/singularity && make && make install #&& cd && rm -rf /tmp/singularity 
-
-RUN mkdir -p /opt/apptainer/containers
-
-RUN APPTAINER_VERSION=1.2.4 && \
-	APPTAINER_DOWNLOAD="https://github.com/apptainer/apptainer/releases/download" && \
-	apt-get update && \
-	curl -LO ${APPTAINER_DOWNLOAD}/v${APPTAINER_VERSION}/apptainer_${APPTAINER_VERSION}_amd64.deb && \
-	curl -LO ${APPTAINER_DOWNLOAD}/v${APPTAINER_VERSION}/apptainer-suid_${APPTAINER_VERSION}_amd64.deb && \
-	gdebi -n apptainer_${APPTAINER_VERSION}_amd64.deb && \
-	gdebi -n apptainer-suid_${APPTAINER_VERSION}_amd64.deb && \
-	rm -f apptainer_${APPTAINER_VERSION}_amd64.deb apptainer-suid_${APPTAINER_VERSION}_amd64.deb
-
 
 ## Configure a mail client and add a couple of nice to have tools
 

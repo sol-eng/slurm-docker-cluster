@@ -27,13 +27,14 @@ services:
       - "5432"
 
   slurmdbd:
-    image: slurm-docker-cluster:${RSWB_VERSION:-2022.07.2-576.pro12}-slurm-${SLURM_VERSION:-22.05.4-1}-${DIST:-jammy}
+    image: mmayer123/slurm-docker-cluster:${PWB_VERSION:-2023.12.1-402.pro1}-slurm-${SLURM_VERSION:-23.11.3-1}-${DIST:-jammy}
     build:
       context: .
       dockerfile: Dockerfile.compile 
       args:
-        SLURM_VERSION: ${SLURM_VERSION:-22.05.4-1}
-        RSWB_VERSION: ${RSWB_VERSION:-2022.07.2-576.pro12}
+        SLURM_VERSION: ${SLURM_VERSION:-23.11.3-1}
+        PWB_VERSION: ${PWB_VERSION:-2023.12.1-402.pro1}
+        LAUNCHER_VERSION: ${LAUNCHER_VERSION}
         DIST: ${DIST:-jammy}
         DISTNUM: ${DISTNUM:-2204}
     command: ["slurmdbd"]
@@ -49,13 +50,14 @@ services:
       - mysql
 
   slurmctld:
-    image: slurm-docker-cluster:${RSWB_VERSION:-2022.07.2-576.pro12}-slurm-${SLURM_VERSION:-22.05.4-1}-${DIST:-jammy}
+    image: mmayer123/slurm-docker-cluster:${PWB_VERSION:-2023.12.1-402.pro1}-slurm-${SLURM_VERSION:-23.11.3-1}-${DIST:-jammy}
     build:
       context: .
       dockerfile: Dockerfile.compile
       args:
-        SLURM_VERSION: ${SLURM_VERSION:-22.05.4-1}
-        RSWB_VERSION: ${RSWB_VERSION:-2022.07.2-576.pro12}
+        SLURM_VERSION: ${SLURM_VERSION:-23.11.3-1}
+        PWB_VERSION: ${PWB_VERSION:-2023.12.1-402.pro1}
+        LAUNCHER_VERSION: ${LAUNCHER_VERSION}
         DIST: ${DIST:-jammy}
         DISTNUM: ${DISTNUM:-2204}
     command: ["slurmctld"]
@@ -74,13 +76,14 @@ services:
       - "slurmdbd"
 
   rstudio1:
-    image: slurm-docker-cluster:${RSWB_VERSION:-2022.07.2-576.pro12}-slurm-${SLURM_VERSION:-22.05.4-1}-${DIST:-jammy}
+    image: mmayer123/slurm-docker-cluster:${PWB_VERSION:-2023.12.1-402.pro1}-slurm-${SLURM_VERSION:-23.11.3-1}-${DIST:-jammy}
     build:
       context: .
       dockerfile: Dockerfile.compile
       args:
-        SLURM_VERSION: ${SLURM_VERSION:-22.05.4-1}
-        RSWB_VERSION: ${RSWB_VERSION:-2022.07.2-576.pro12}
+        SLURM_VERSION: ${SLURM_VERSION:-23.11.3-1}
+        PWB_VERSION: ${PWB_VERSION:-2023.12.1-402.pro1}
+        LAUNCHER_VERSION: ${LAUNCHER_VERSION}
         DIST: ${DIST:-jammy}
         DISTNUM: ${DISTNUM:-2204}
     command: ["rstudio"]
@@ -93,8 +96,7 @@ services:
       - slurm_jobdir:/data
       - var_log_slurm:/var/log/slurm
       - var_lib_rstudio_server:/var/lib/rstudio-server
-      - home:/home
-      - ./singularity/containers:/opt/apptainer/containers    
+      - home:/home   
     expose:
       - "8787"
     ports:
@@ -107,13 +109,14 @@ services:
 
 
   rstudio2:
-    image: slurm-docker-cluster:${RSWB_VERSION:-2022.07.2-576.pro12}-slurm-${SLURM_VERSION:-22.05.4-1}-${DIST:-jammy}
+    image: mmayer123/slurm-docker-cluster:${PWB_VERSION:-2023.12.1-402.pro1}-slurm-${SLURM_VERSION:-23.11.3-1}-${DIST:-jammy}
     build:
       context: .
       dockerfile: Dockerfile.compile
       args:
-        SLURM_VERSION: ${SLURM_VERSION:-22.05.4-1}
-        RSWB_VERSION: ${RSWB_VERSION:-2022.07.2-576.pro12}
+        SLURM_VERSION: ${SLURM_VERSION:-23.11.3-1}
+        PWB_VERSION: ${PWB_VERSION:-2023.12.1-402.pro1}
+        LAUNCHER_VERSION: ${LAUNCHER_VERSION}
         DIST: ${DIST:-jammy}
         DISTNUM: ${DISTNUM:-2204}
     command: ["rstudio"]
@@ -127,7 +130,6 @@ services:
       - var_log_slurm:/var/log/slurm
       - var_lib_rstudio_server:/var/lib/rstudio-server
       - home:/home
-      - ./singularity/containers:/opt/apptainer/containers
     expose:
       - "8787"
     ports:
@@ -139,13 +141,14 @@ services:
       RSP_LICENSE: ${RSP_LICENSE}
 
   c1:
-    image: slurm-docker-cluster:${RSWB_VERSION:-2022.07.2-576.pro12}-slurm-${SLURM_VERSION:-22.05.4-1}-${DIST:-jammy}
+    image: mmayer123/slurm-docker-cluster:${PWB_VERSION:-2023.12.1-402.pro1}-slurm-${SLURM_VERSION:-23.11.3-1}-${DIST:-jammy}
     build:
       context: .
       dockerfile: Dockerfile.compile
       args:
-        SLURM_VERSION: ${SLURM_VERSION:-22.05.4-1}
-        RSWB_VERSION: ${RSWB_VERSION:-2022.07.2-576.pro12}
+        SLURM_VERSION: ${SLURM_VERSION:-23.11.3-1}
+        PWB_VERSION: ${PWB_VERSION:-2023.12.1-402.pro1}
+        LAUNCHER_VERSION: ${LAUNCHER_VERSION}
         DIST: ${DIST:-jammy}
         DISTNUM: ${DISTNUM:-2204}
     command: ["slurmd"]
@@ -159,20 +162,20 @@ services:
       - var_log_slurm:/var/log/slurm
       - var_lib_rstudio_server:/var/lib/rstudio-server
       - home:/home
-      - ./singularity/containers:/opt/apptainer/containers
     expose:
       - "6818"
     depends_on:
       - "slurmctld"
 
   c2:
-    image: slurm-docker-cluster:${RSWB_VERSION:-2022.07.2-576.pro12}-slurm-${SLURM_VERSION:-22.05.4-1}-${DIST:-jammy}
+    image: mmayer123/slurm-docker-cluster:${PWB_VERSION:-2023.12.1-402.pro1}-slurm-${SLURM_VERSION:-23.11.3-1}-${DIST:-jammy}
     build:
       context: .
       dockerfile: Dockerfile.compile
       args:
-        SLURM_VERSION: ${SLURM_VERSION:-22.05.4-1}
-        RSWB_VERSION: ${RSWB_VERSION:-2022.07.2-576.pro12}
+        SLURM_VERSION: ${SLURM_VERSION:-23.11.3-1}
+        PWB_VERSION: ${PWB_VERSION:-2023.12.1-402.pro1}
+        LAUNCHER_VERSION: ${LAUNCHER_VERSION}
         DIST: ${DIST:-jammy}
         DISTNUM: ${DISTNUM:-2204}
     command: ["slurmd"]
@@ -186,7 +189,6 @@ services:
       - var_log_slurm:/var/log/slurm
       - var_lib_rstudio_server:/var/lib/rstudio-server
       - home:/home
-      - ./singularity/containers:/opt/apptainer/containers
     expose:
       - "6818"
     depends_on:

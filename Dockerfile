@@ -8,8 +8,8 @@ LABEL org.opencontainers.image.source="https://github.com/michaelmayer2/slurm-do
 
 ARG SLURM_TAG=slurm-19-05-2-1
 ARG GOSU_VERSION=1.11
-ARG R_VERSIONS="3.6.3 4.0.5 4.1.2"
-ARG RSWB_VERSION="2021.09.0-351.pro6"
+ARG R_VERSIONS="3.6.3 4.3.2"
+ARG PWB_VERSION
 ARG PROXY
 
 RUN if test -n $PROXY; then echo "Acquire::http { Proxy \"http://$PROXY:3142\"; };" >> /etc/apt/apt.conf.d/01proxy; fi
@@ -27,9 +27,9 @@ RUN apt-get update -y && \
 		rm -f r-${R_VERSION}_1_amd64.deb && \
 		/opt/R/$R_VERSION/bin/Rscript /tmp/create.R ;\
 	done && \
-	curl -O https://download2.rstudio.org/server/bionic/amd64/rstudio-workbench-${RSWB_VERSION}-amd64.deb && \
-	gdebi -n rstudio-workbench-${RSWB_VERSION}-amd64.deb && \
-	rm -f rstudio-workbench-${RSWB_VERSION}-amd64.deb && \
+	curl -O https://download2.rstudio.org/server/bionic/amd64/rstudio-workbench-${PWB_VERSION}-amd64.deb && \
+	gdebi -n rstudio-workbench-${PWB_VERSION}-amd64.deb && \
+	rm -f rstudio-workbench-${PWB_VERSION}-amd64.deb && \
     	apt clean all && \
     	rm -rf /var/cache/apt
 

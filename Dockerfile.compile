@@ -1,37 +1,55 @@
-FROM ubuntu:22.04
+ARG DIST="focal"
+ARG DISTNUM="2004"
+
+FROM ubuntu:${DIST}
 
 LABEL org.opencontainers.image.source="https://github.com/michaelmayer2/slurm-docker-cluster" \
       org.opencontainers.image.title="slurm-docker-cluster" \
-      org.opencontainers.image.description="Slurm Docker cluster on Ububtu 20.04 LTS" \
+      org.opencontainers.image.description="Slurm Docker cluster on Ubuntu ${DIST} LTS" \
       org.label-schema.docker.cmd="docker-compose up -d" \
       maintainer="Michael Mayer"
 
-ARG SLURM_VERSION
 ARG GOSU_VERSION=1.11
-ARG R_VERSIONS="3.6.3 4.0.5 4.1.2"
-ARG RSWB_VERSION
+ARG R_VERSIONS="3.6.3 4.3.2"
 ARG PROXY
+ARG DIST="focal"
+ARG DISTNUM="2004"
 
 
 # Install and configure R and RStudio Workbench
 
 COPY rstudio/create.R /tmp/create.R 
 
+
 RUN apt-get update -y && \
 	apt-get install -y gdebi-core curl wget && \ 
 	IFS=" "; for R_VERSION in $R_VERSIONS ; \
 	do \
-		curl -O https://cdn.rstudio.com/r/ubuntu-2204/pkgs/r-${R_VERSION}_1_amd64.deb && \
+		curl -O https://cdn.rstudio.com/r/ubuntu-${DISTNUM}/pkgs/r-${R_VERSION}_1_amd64.deb && \
 		gdebi -n r-${R_VERSION}_1_amd64.deb && \
 		rm -f r-${R_VERSION}_1_amd64.deb && \
 		/opt/R/$R_VERSION/bin/Rscript /tmp/create.R ;\
 	done && \
-	#curl -O https://download2.rstudio.org/server/jammy/amd64/rstudio-workbench-${RSWB_VERSION}-amd64.deb && \
-        curl -O https://s3.amazonaws.com/rstudio-ide-build/server/jammy/amd64/rstudio-workbench-${RSWB_VERSION}-amd64.deb && \
-	gdebi -n rstudio-workbench-${RSWB_VERSION}-amd64.deb && \
-	rm -f rstudio-workbench-${RSWB_VERSION}-amd64.deb && \
+	apt clean all && \
+        rm -rf /var/cache/apt
+   
+ARG PWB_VERSION
+RUN apt-get update -y && groupadd  -g 999 rstudio-server && \ 
+   	useradd -g 999 -m -u 999 -s /bin/bash rstudio-server && \
+        curl -O https://s3.amazonaws.com/rstudio-ide-build/server/${DIST}/amd64/rstudio-workbench-${PWB_VERSION}-amd64.deb && \
+	gdebi -n rstudio-workbench-${PWB_VERSION}-amd64.deb && \
+	rm -f rstudio-workbench-${PWB_VERSION}-amd64.deb && \
     	apt clean all && \
     	rm -rf /var/cache/apt
+
+ARG LAUNCHER_VERSION
+RUN if [ ! -z ${LAUNCHER_VERSION} ]; then \
+    cd /tmp && \
+    curl -O https://cdn.rstudio.com/launcher/releases/jammy/launcher-jammy-amd64-2.16.0-136.tar.gz && \
+    tar xvfz launcher-* -C /usr/lib/rstudio-server/bin  --strip-components=1 && \
+    rm -f launcher-* ; \
+    fi
+
 
 COPY rstudio/launcher.conf /etc/rstudio/launcher.conf
 COPY rstudio/launcher.slurm.conf /etc/rstudio/launcher.slurm.conf
@@ -70,18 +88,20 @@ RUN openssl rsa -in /etc/rstudio/launcher.pem \
 
 ### Install Python  -------------------------------------------------------------#
 
-ARG PYTHON_VERSION=3.8.10
-RUN curl -O https://cdn.rstudio.com/python/ubuntu-2204/pkgs/python-${PYTHON_VERSION}_1_amd64.deb && \
+ARG PYTHON_VERSION=3.11.6
+RUN curl -O https://cdn.rstudio.com/python/ubuntu-${DISTNUM}/pkgs/python-${PYTHON_VERSION}_1_amd64.deb && \
     apt-get update && gdebi -n python-${PYTHON_VERSION}_1_amd64.deb && apt clean all && \
-    rm -rf /var/cache/apt && rm -f python-${PYTHON_VERSION}_1_amd64.deb && \
-    /opt/python/${PYTHON_VERSION}/bin/pip install \
-         jupyter==1.0.0 \
-        'jupyterlab<3.0.0' \
-        rsp_jupyter \
-        rsconnect_jupyter && \
-    /opt/python/${PYTHON_VERSION}/bin/python -m ipykernel install --name py${PYTHON_VERSION} --display-name "Python ${PYTHON_VERSION}" 
+    rm -rf /var/cache/apt && rm -f python-${PYTHON_VERSION}_1_amd64.deb
 
-### Install RSW/RSC Notebook Extensions --------------------#
+RUN /opt/python/${PYTHON_VERSION}/bin/pip install --upgrade pip 
+
+RUN /opt/python/${PYTHON_VERSION}/bin/pip install \
+    jupyter \
+    jupyterlab \
+    workbench_jupyterlab \
+    rsp_jupyter \
+    rsconnect_jupyter \
+    rsconnect_python 
 
 RUN /opt/python/${PYTHON_VERSION}/bin/jupyter-nbextension install --sys-prefix --py rsp_jupyter && \
     /opt/python/${PYTHON_VERSION}/bin/jupyter-nbextension enable --sys-prefix --py rsp_jupyter && \
@@ -89,35 +109,16 @@ RUN /opt/python/${PYTHON_VERSION}/bin/jupyter-nbextension install --sys-prefix -
     /opt/python/${PYTHON_VERSION}/bin/jupyter-nbextension enable --sys-prefix --py rsconnect_jupyter && \
     /opt/python/${PYTHON_VERSION}/bin/jupyter-serverextension enable --sys-prefix --py rsconnect_jupyter
 
-ARG PYTHON_VERSION_ALT=3.9.5
-RUN curl -O https://cdn.rstudio.com/python/ubuntu-2204/pkgs/python-${PYTHON_VERSION_ALT}_1_amd64.deb && \
-    apt-get update && gdebi -n python-${PYTHON_VERSION_ALT}_1_amd64.deb && apt clean all && \
-    rm -rf /var/cache/apt && rm -f python-${PYTHON_VERSION_ALT}_1_amd64.deb && \
-    /opt/python/${PYTHON_VERSION_ALT}/bin/pip install \
-         jupyter==1.0.0 \
-        'jupyterlab<3.0.0' \
-        rsp_jupyter \
-        rsconnect_jupyter && \
-    /opt/python/${PYTHON_VERSION_ALT}/bin/python -m ipykernel install --name py${PYTHON_VERSION_ALT} --display-name "Python ${PYTHON_VERSION_ALT}"
-
-### Install RSW/RSC Notebook Extensions --------------------#
-
-RUN /opt/python/${PYTHON_VERSION_ALT}/bin/jupyter-nbextension install --sys-prefix --py rsp_jupyter && \
-    /opt/python/${PYTHON_VERSION_ALT}/bin/jupyter-nbextension enable --sys-prefix --py rsp_jupyter && \
-    /opt/python/${PYTHON_VERSION_ALT}/bin/jupyter-nbextension install --sys-prefix --py rsconnect_jupyter && \
-    /opt/python/${PYTHON_VERSION_ALT}/bin/jupyter-nbextension enable --sys-prefix --py rsconnect_jupyter && \
-    /opt/python/${PYTHON_VERSION_ALT}/bin/jupyter-serverextension enable --sys-prefix --py rsconnect_jupyter
 
 COPY rstudio/jupyter.conf /etc/rstudio/jupyter.conf
 
 
 #### Install VSCode code-server --------------------------------------------------#
 
-RUN rstudio-server install-vs-code /opt/code-server/
-
-COPY rstudio/vscode.conf /etc/rstudio/vscode.conf
-COPY rstudio/vscode-user-settings.json  /etc/rstudio/vscode-user-settings.json
-
+#COPY rstudio/vscode.conf /etc/rstudio/vscode.conf
+#COPY rstudio/vscode-user-settings.json  /etc/rstudio/vscode-user-settings.json
+# Install VSCode based on the PWB version. 
+RUN /bin/bash -c "if ( rstudio-server | grep configure-vs-code ); then rstudio-server configure-vs-code ; rstudio-server install-vs-code-ext; else rstudio-server install-vs-code /opt/code-server/; fi"
 
 ## Install SLURM
 
@@ -163,13 +164,19 @@ RUN set -ex \
     && apt clean all \
     && rm -rf /var/cache/apt
 
+ARG SLURM_VERSION
+
 ## Build SLURM from source and add folders and permissions
-RUN mkdir -p /tmp/build && cd /tmp/build \
+RUN mkdir -p /etc/slurm && mkdir -p /tmp/build && cd /tmp/build \
     && bash -c "git clone --depth 1 -b slurm-\${SLURM_VERSION//./-} https://github.com/SchedMD/slurm.git" \
     && cd slurm \
+    && echo "Configuring SLURM ${SLURM_VERSION}" \
     && bash -c "./configure --enable-debug --prefix=/usr --sysconfdir=/etc/slurm \
-        --with-mysql_config=/usr/bin  --libdir=/usr/lib64 >& /tmp/build.log"\
-    && make install \
+        --with-mysql_config=/usr/bin  --libdir=/usr/lib64 >& /etc/slurm/.build.log" \
+    && echo "Building SLURM ${SLURM_VERSION}" \
+    && bash -c "make -j 8 >& /etc/slurm/.build.log" \
+    && echo "Installing SLURM ${SLURM_VERSION}" \
+    && bash -c "make -j 8 install >& /etc/slurm/.install.log" \
     && install -D -m644 etc/cgroup.conf.example /etc/slurm/cgroup.conf.example \
     && install -D -m644 etc/slurm.conf.example /etc/slurm/slurm.conf.example \
     && install -D -m644 etc/slurmdbd.conf.example /etc/slurm/slurmdbd.conf.example \
@@ -194,37 +201,20 @@ RUN mkdir -p /tmp/build && cd /tmp/build \
         /var/lib/slurmd/assoc_usage \
         /var/lib/slurmd/qos_usage \
         /var/lib/slurmd/fed_mgr_state \
-    && chown -R slurm:slurm /var/*/slurm* \
-    && /usr/sbin/mungekey -c -f
+    && chown -R slurm:slurm /var/*/slurm* 
+
+RUN if [ -f /usr/sbin/create-munge-key ]; then /usr/sbin/create-munge-key ; else /usr/sbin/mungekey -c -f; fi 
 
 COPY slurm/slurm.conf /etc/slurm/slurm.conf
 COPY slurm/slurmdbd.conf /etc/slurm/slurmdbd.conf
 
 RUN echo "CgroupAutomount=yes \n\
-CgroupPlugin=cgroup/v1 \n\
+#CgroupPlugin=cgroup/v1 \n\
 ConstrainCores=yes \n\
 ConstrainRAMSpace=yes" > /etc/slurm/cgroup.conf
 
 RUN chmod 0600 /etc/slurm/slurmdbd.conf
 RUN chown 105:105 /etc/munge/munge.key 
-
-## Add Singularity Integration
-
-RUN mkdir -p /tmp/singularity
-COPY singularity/spank/* /tmp/singularity/
-RUN cd /tmp/singularity && make && make install #&& cd && rm -rf /tmp/singularity 
-
-RUN mkdir -p /opt/apptainer/containers
-
-RUN APPTAINER_VERSION=1.1.3 && \
-	APPTAINER_DOWNLOAD="https://github.com/apptainer/apptainer/releases/download" && \
-	apt-get update && \
-	curl -LO ${APPTAINER_DOWNLOAD}/v${APPTAINER_VERSION}/apptainer_${APPTAINER_VERSION}_amd64.deb && \
-	curl -LO ${APPTAINER_DOWNLOAD}/v${APPTAINER_VERSION}/apptainer-suid_${APPTAINER_VERSION}_amd64.deb && \
-	gdebi -n apptainer_${APPTAINER_VERSION}_amd64.deb && \
-	gdebi -n apptainer-suid_${APPTAINER_VERSION}_amd64.deb && \
-	rm -f apptainer_${APPTAINER_VERSION}_amd64.deb apptainer-suid_${APPTAINER_VERSION}_amd64.deb
-
 
 ## Configure a mail client and add a couple of nice to have tools
 
@@ -260,6 +250,8 @@ RUN set -ex \
 RUN groupadd rstudio -g 2048 \
         && useradd -m rstudio -s /bin/bash -u 2048 -g 2048\
         && bash -c "echo -e \"rstudio\\nrstudio\" | passwd rstudio"
+
+RUN if [ ! -f /usr/lib64/slurm/select_cons_res.so ]; then sed -i 's/cons_res/cons_tres/' /etc/slurm/slurm.conf; fi
 
 
 COPY scripts/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh

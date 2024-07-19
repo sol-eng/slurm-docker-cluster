@@ -97,6 +97,13 @@ services:
       - var_log_slurm:/var/log/slurm
       - var_lib_rstudio_server:/var/lib/rstudio-server
       - home:/home   
+      - ${PWD}/rstudio/launcher.conf:/etc/rstudio/launcher.conf
+      - ${PWD}/rstudio/launcher.slurm.conf:/etc/rstudio/launcher.slurm.conf
+      - ${PWD}/rstudio/launcher.slurm.profiles.conf:/etc/rstudio/launcher.slurm.profiles.conf
+      - ${PWD}/rstudio/rserver.conf:/etc/rstudio/rserver.conf
+      - ${PWD}/rstudio/load-balancer:/etc/rstudio/load-balancer
+      - ${PWD}/rstudio/launcher.slurm.resources.conf:/etc/rstudio/launcher.slurm.resources.conf
+      - ${PWD}/rstudio/jupyter.conf:/etc/rstudio/jupyter.conf
     expose:
       - "8787"
     ports:
@@ -130,6 +137,13 @@ services:
       - var_log_slurm:/var/log/slurm
       - var_lib_rstudio_server:/var/lib/rstudio-server
       - home:/home
+      - ${PWD}/rstudio/launcher.conf:/etc/rstudio/launcher.conf
+      - ${PWD}/rstudio/launcher.slurm.conf:/etc/rstudio/launcher.slurm.conf
+      - ${PWD}/rstudio/launcher.slurm.profiles.conf:/etc/rstudio/launcher.slurm.profiles.conf
+      - ${PWD}/rstudio/rserver.conf:/etc/rstudio/rserver.conf
+      - ${PWD}/rstudio/load-balancer:/etc/rstudio/load-balancer
+      - ${PWD}/rstudio/launcher.slurm.resources.conf:/etc/rstudio/launcher.slurm.resources.conf
+      - ${PWD}/rstudio/jupyter.conf:/etc/rstudio/jupyter.conf
     expose:
       - "8787"
     ports:

@@ -101,9 +101,15 @@ then
 
     fi
 
+   
+
     echo "---> Activating the RSW License ..."
     /usr/lib/rstudio-server/bin/license-manager activate $RSP_LICENSE
 
+    echo "---> enabling debugging ..."
+    echo -e "[*]\nlog-level=debug" > /etc/rstudio/logging.conf
+
+    echo "---> starting RSW ..."
     /usr/bin/rstudio-launcher start
     sleep 4
     /usr/sbin/rstudio-server start

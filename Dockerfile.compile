@@ -51,13 +51,8 @@ RUN if [ ! -z ${LAUNCHER_VERSION} ]; then \
     fi
 
 
-COPY rstudio/launcher.conf /etc/rstudio/launcher.conf
-COPY rstudio/launcher.slurm.conf /etc/rstudio/launcher.slurm.conf
-COPY rstudio/launcher.slurm.profiles.conf /etc/rstudio/launcher.slurm.profiles.conf
-COPY rstudio/rserver.conf /etc/rstudio/rserver.conf
 COPY rstudio/database.conf /etc/rstudio/database.conf
 RUN chmod 0600 /etc/rstudio/database.conf
-COPY rstudio/load-balancer /etc/rstudio/load-balancer
 
 
 ## Configure launcher.* and secure-cookie-key
@@ -108,9 +103,6 @@ RUN /opt/python/${PYTHON_VERSION}/bin/jupyter-nbextension install --sys-prefix -
     /opt/python/${PYTHON_VERSION}/bin/jupyter-nbextension install --sys-prefix --py rsconnect_jupyter && \
     /opt/python/${PYTHON_VERSION}/bin/jupyter-nbextension enable --sys-prefix --py rsconnect_jupyter && \
     /opt/python/${PYTHON_VERSION}/bin/jupyter-serverextension enable --sys-prefix --py rsconnect_jupyter
-
-
-COPY rstudio/jupyter.conf /etc/rstudio/jupyter.conf
 
 
 #### Install VSCode code-server --------------------------------------------------#
@@ -208,8 +200,8 @@ RUN if [ -f /usr/sbin/create-munge-key ]; then /usr/sbin/create-munge-key ; else
 COPY slurm/slurm.conf /etc/slurm/slurm.conf
 COPY slurm/slurmdbd.conf /etc/slurm/slurmdbd.conf
 
-RUN echo "CgroupAutomount=yes \n\
-#CgroupPlugin=cgroup/v1 \n\
+RUN echo "#CgroupAutomount=yes \n\
+CgroupPlugin=cgroup/v1 \n\
 ConstrainCores=yes \n\
 ConstrainRAMSpace=yes" > /etc/slurm/cgroup.conf
 
@@ -254,6 +246,7 @@ RUN groupadd rstudio -g 2048 \
 RUN if [ ! -f /usr/lib64/slurm/select_cons_res.so ]; then sed -i 's/cons_res/cons_tres/' /etc/slurm/slurm.conf; fi
 
 
+COPY rstudio/launcher.slurm.resources.conf /etc/rstudio
 COPY scripts/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]

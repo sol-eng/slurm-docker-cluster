@@ -46,7 +46,7 @@ The setup uses one single docker image named `slurm-docker-cluster`. You can bui
 ```console
 docker-compose build 
 ```
-which will build the `slurm-docker-cluster` using default values for the versions of RStudio Workbench (2023.12.1-402.pro1) and SLURM (23.11.3) and for Ubuntu 22.04 LTS (Focal).
+which will build the `slurm-docker-cluster` using default values for the versions of RStudio Workbench (2024.09.0+375.pro3) and SLURM (23.11.3) and for Ubuntu 22.04 LTS (Focal).
 
 If you wanted to use a different Posit Workbench and SLURM version (or a different Ubuntu LTS version), you can set the environment variables `PWB_VERSION`, `SLURM_VERSION`, `DIST` and `DISTNUM`to your desired Workbench and SLURM version. e.g. 
 

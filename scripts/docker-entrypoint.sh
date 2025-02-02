@@ -153,7 +153,7 @@ then
     echo "-- slurmctld is now active ..."
 
     echo "---> Starting the Slurm Node Daemon (slurmd) ..."
-    sudo -u slurm /usr/sbin/slurmd
+    /usr/sbin/slurmd
 
     # Loop indefinitely
     while true; do sleep 20; done

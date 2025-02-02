@@ -4,7 +4,6 @@ services:
   mysql:
     image: mysql:5.7
     hostname: mysql
-    container_name: slurm-mysql
     environment:
       MYSQL_RANDOM_ROOT_PASSWORD: "yes"
       MYSQL_DATABASE: slurm_acct_db
@@ -16,7 +15,6 @@ services:
   postgres:
     image: postgres:14.5
     hostname: postgres
-    container_name: slurm-postgres
     environment:
       POSTGRES_USER: "postgres"
       POSTGRES_PASSWORD: "yes"
@@ -38,7 +36,6 @@ services:
         DIST: ${DIST:-jammy}
         DISTNUM: ${DISTNUM:-2204}
     command: ["slurmdbd"]
-    container_name: slurm-slurmdbd
     hostname: slurmdbd
     volumes:
       - etc_munge:/etc/munge
@@ -61,7 +58,6 @@ services:
         DIST: ${DIST:-jammy}
         DISTNUM: ${DISTNUM:-2204}
     command: ["slurmctld"]
-    container_name: slurm-slurmctld
     hostname: slurmctld
     privileged: true 
     volumes:
@@ -87,8 +83,7 @@ services:
         DIST: ${DIST:-jammy}
         DISTNUM: ${DISTNUM:-2204}
     command: ["rstudio"]
-    container_name: slurm-rstudio1
-    hostname: rstudio1
+    hostname: rstudio
     privileged: true
     volumes:
       - etc_munge:/etc/munge
@@ -97,13 +92,13 @@ services:
       - var_log_slurm:/var/log/slurm
       - var_lib_rstudio_server:/var/lib/rstudio-server
       - home:/home   
-      - ${PWD}/rstudio/launcher.conf:/etc/rstudio/launcher.conf
-      - ${PWD}/rstudio/launcher.slurm.conf:/etc/rstudio/launcher.slurm.conf
-      - ${PWD}/rstudio/launcher.slurm.profiles.conf:/etc/rstudio/launcher.slurm.profiles.conf
-      - ${PWD}/rstudio/rserver.conf:/etc/rstudio/rserver.conf
-      - ${PWD}/rstudio/load-balancer:/etc/rstudio/load-balancer
-      - ${PWD}/rstudio/launcher.slurm.resources.conf:/etc/rstudio/launcher.slurm.resources.conf
-      - ${PWD}/rstudio/jupyter.conf:/etc/rstudio/jupyter.conf
+      - ./rstudio/launcher.conf:/etc/rstudio/launcher.conf
+      - ./rstudio/launcher.slurm.conf:/etc/rstudio/launcher.slurm.conf
+      - ./rstudio/launcher.slurm.profiles.conf:/etc/rstudio/launcher.slurm.profiles.conf
+      - ./rstudio/rserver.conf:/etc/rstudio/rserver.conf
+      - ./rstudio/load-balancer:/etc/rstudio/load-balancer
+      - ./rstudio/launcher.slurm.resources.conf:/etc/rstudio/launcher.slurm.resources.conf
+      - ./rstudio/jupyter.conf:/etc/rstudio/jupyter.conf
     expose:
       - "8787"
     ports:
@@ -128,7 +123,6 @@ services:
         DISTNUM: ${DISTNUM:-2204}
     command: ["slurmd"]
     hostname: c1
-    container_name: slurm-c1
     privileged: true
     volumes:
       - etc_munge:/etc/munge
@@ -155,7 +149,6 @@ services:
         DISTNUM: ${DISTNUM:-2204}
     command: ["slurmd"]
     hostname: c2
-    container_name: slurm-c2
     privileged: true
     volumes:
       - etc_munge:/etc/munge

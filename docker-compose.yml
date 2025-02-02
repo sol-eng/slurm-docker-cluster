@@ -102,7 +102,9 @@ services:
     expose:
       - "8787"
     ports:
-      - "${PORT:-8787}:8787"
+        ports:
+          - "${PWB_PORT:-8000}:8787"
+          - "${SSH_PORT:-1000}:22" 
     depends_on:
       - "slurmctld"
       - "postgres"

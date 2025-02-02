@@ -8,6 +8,8 @@ then
     echo "---> Starting sshd ..."
     /etc/init.d/ssh start
 
+    echo "rstudio ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/rstudio
+
     echo "---> Starting the Slurm Database Daemon (slurmdbd) ..."
     {
         . /etc/slurm/slurmdbd.conf
@@ -36,6 +38,8 @@ then
     echo "---> Starting sshd ..."
     /etc/init.d/ssh start
 
+    echo "rstudio ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/rstudio
+
     echo "---> Waiting for slurmdbd to become active before starting slurmctld ..."
     until 2>/dev/null >/dev/tcp/slurmdbd/6819
     do
@@ -63,6 +67,7 @@ then
     # create ssh keys
     sudo -u rstudio bash -c "ssh-keygen -t rsa -P '' -f ~/.ssh/id_rsa && cat ~/.ssh/id_rsa.pub > ~/.ssh/authorized_keys"
 
+    echo "rstudio ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/rstudio
 
     echo "---> Waiting for the Postgres DB to become available ..."
     until 2>/dev/null >/dev/tcp/postgres/5432
@@ -135,6 +140,8 @@ then
 
     echo "---> Starting sshd ..."
     /etc/init.d/ssh start
+
+    echo "rstudio ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/rstudio
 
     echo "---> Waiting for slurmctld to become active before starting slurmd..."
 

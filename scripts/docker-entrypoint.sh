@@ -60,6 +60,10 @@ then
     echo "---> Starting sshd ..."
     /etc/init.d/ssh start
 
+    # create ssh keys
+    sudo -u rstudio bash -c "ssh-keygen -t rsa -P '' -f ~/.ssh/id_rsa && cat ~/.ssh/id_rsa.pub > ~/.ssh/authorized_keys"
+
+
     echo "---> Waiting for the Postgres DB to become available ..."
     until 2>/dev/null >/dev/tcp/postgres/5432
     do

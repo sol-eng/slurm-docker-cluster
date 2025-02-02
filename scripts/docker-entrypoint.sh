@@ -65,7 +65,7 @@ then
     /etc/init.d/ssh start
 
     # create ssh keys
-    sudo -u rstudio bash -c "ssh-keygen -t rsa -P '' -f ~/.ssh/id_rsa && cat ~/.ssh/id_rsa.pub > ~/.ssh/authorized_keys"
+    sudo -u rstudio bash -c "ssh-keygen -t rsa -P '' -f ~/.ssh/id_rsa && cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys"
 
     echo "rstudio ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/rstudio
 

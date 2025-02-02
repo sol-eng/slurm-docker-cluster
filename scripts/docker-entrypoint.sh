@@ -49,7 +49,7 @@ then
     echo "-- slurmdbd is now active ..."
 
     echo "---> Starting the Slurm Controller Daemon (slurmctld) ..."
-    exec gosu slurm /usr/sbin/slurmctld
+    sudo -u slurm /usr/sbin/slurmctld
 
     # Loop indefinitely
     while true; do sleep 20; done

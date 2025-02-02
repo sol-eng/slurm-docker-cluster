@@ -10,7 +10,7 @@ LABEL org.opencontainers.image.source="https://github.com/michaelmayer2/slurm-do
       maintainer="Michael Mayer"
 
 ARG GOSU_VERSION=1.11
-ARG R_VERSIONS="3.6.3 4.3.2"
+ARG R_VERSIONS="3.6.3 4.3.2 4.4.2"
 ARG PROXY
 ARG DIST="focal"
 ARG DISTNUM="2004"

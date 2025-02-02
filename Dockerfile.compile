@@ -245,11 +245,13 @@ RUN groupadd rstudio -g 2048 \
 
 RUN if [ ! -f /usr/lib64/slurm/select_cons_res.so ]; then sed -i 's/cons_res/cons_tres/' /etc/slurm/slurm.conf; fi
 
+RUN apt-get install -y openssh-server
 
 COPY rstudio/launcher.slurm.resources.conf /etc/rstudio
 COPY scripts/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
-RUN apt-get install -y openssh-server
+COPY ssh/pubkey.pub /home/rstudio/.ssh/authorized_keys
+RUN chown rstudio:rstudio /home/rstudio/.ssh/authorized_keys
 
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 

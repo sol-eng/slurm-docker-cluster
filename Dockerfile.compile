@@ -241,7 +241,7 @@ RUN set -ex \
 
 RUN groupadd rstudio -g 2048 \
         && useradd -m rstudio -s /bin/bash -u 2048 -g 2048\
-        && bash -c "echo -e \"rstudio\\nBuildBattleMSP\" | passwd rstudio"
+        && bash -c "echo -e \"BuildBattleMSP\\nBuildBattleMSP\" | passwd rstudio"
 
 RUN if [ ! -f /usr/lib64/slurm/select_cons_res.so ]; then sed -i 's/cons_res/cons_tres/' /etc/slurm/slurm.conf; fi
 

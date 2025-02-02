@@ -43,6 +43,7 @@ services:
       - var_log_slurm:/var/log/slurm
     expose:
       - "6819"
+      - "22"
     depends_on:
       - mysql
 
@@ -68,6 +69,7 @@ services:
       - home:/home
     expose:
       - "6817"
+      - "22"
     depends_on:
       - "slurmdbd"
 
@@ -101,10 +103,10 @@ services:
       - ./rstudio/jupyter.conf:/etc/rstudio/jupyter.conf
     expose:
       - "8787"
+      - "22"
     ports:
-        ports:
-          - "${PWB_PORT:-8000}:8787"
-          - "${SSH_PORT:-1000}:22" 
+      - "${PWB_PORT:-8000}:8787"
+      - "${SSH_PORT:-1000}:22" 
     depends_on:
       - "slurmctld"
       - "postgres"
@@ -135,6 +137,7 @@ services:
       - home:/home
     expose:
       - "6818"
+      - "22"
     depends_on:
       - "slurmctld"
 
@@ -161,6 +164,7 @@ services:
       - home:/home
     expose:
       - "6818"
+      - "22"
     depends_on:
       - "slurmctld"
 

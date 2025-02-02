@@ -249,6 +249,8 @@ RUN if [ ! -f /usr/lib64/slurm/select_cons_res.so ]; then sed -i 's/cons_res/con
 COPY rstudio/launcher.slurm.resources.conf /etc/rstudio
 COPY scripts/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
+RUN apt-get install -y openssh-server
+
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 
 CMD ["slurmdbd"]

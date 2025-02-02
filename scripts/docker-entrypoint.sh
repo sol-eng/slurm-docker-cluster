@@ -5,6 +5,9 @@ then
     echo "---> Starting the MUNGE Authentication service (munged) ..."
     /etc/init.d/munge start  
 
+    echo "---> Starting sshd ..."
+    /etc/init.d/ssh start
+
     echo "---> Starting the Slurm Database Daemon (slurmdbd) ..."
     {
         . /etc/slurm/slurmdbd.conf
@@ -19,14 +22,19 @@ then
     chmod 0600 /etc/slurm/slurmdbd.conf
     chown slurm /etc/slurm/slurmdbd.conf
 
-    exec gosu slurm /usr/sbin/slurmdbd -D
+    exec gosu slurm /usr/sbin/slurmdbd
 
+    # Loop indefinitely
+    while true; do sleep 20; done
 fi
 
 if [ "$1" = "slurmctld" ]
 then
     echo "---> Starting the MUNGE Authentication service (munged) ..."
     /etc/init.d/munge start 
+
+    echo "---> Starting sshd ..."
+    /etc/init.d/ssh start
 
     echo "---> Waiting for slurmdbd to become active before starting slurmctld ..."
     until 2>/dev/null >/dev/tcp/slurmdbd/6819
@@ -37,7 +45,10 @@ then
     echo "-- slurmdbd is now active ..."
 
     echo "---> Starting the Slurm Controller Daemon (slurmctld) ..."
-    exec gosu slurm /usr/sbin/slurmctld -D
+    exec gosu slurm /usr/sbin/slurmctld
+
+    # Loop indefinitely
+    while true; do sleep 20; done
     
 fi
 
@@ -45,6 +56,9 @@ if [ "$1" = "rstudio" ]
 then
     echo "---> Starting the MUNGE Authentication service (munged) ..."
     /etc/init.d/munge start 
+
+    echo "---> Starting sshd ..."
+    /etc/init.d/ssh start
 
     echo "---> Waiting for the Postgres DB to become available ..."
     until 2>/dev/null >/dev/tcp/postgres/5432
@@ -91,18 +105,6 @@ then
         sleep 2
     done
 
-    if [ `hostname` == "rstudio2" ]; then 
-
-        until 2>/dev/null >/dev/tcp/rstudio1/8787
-        do
-            echo "-- RSW on rstudio1 is not available.  Sleeping ..."
-            sleep 2
-        done
-
-    fi
-
-   
-
     echo "---> Activating the RSW License ..."
     /usr/lib/rstudio-server/bin/license-manager activate $RSP_LICENSE
 
@@ -115,10 +117,8 @@ then
     /usr/sbin/rstudio-server start
     sleep 4 
 
-    while true 
-    do
-        sleep 20
-    done
+    # Loop indefinitely
+    while true; do sleep 20; done
 
 fi
 
@@ -128,6 +128,9 @@ then
     echo "---> Starting the MUNGE Authentication service (munged) ..."
     #gosu munge /usr/sbin/munged
     /etc/init.d/munge start 
+
+    echo "---> Starting sshd ..."
+    /etc/init.d/ssh start
 
     echo "---> Waiting for slurmctld to become active before starting slurmd..."
 
@@ -139,7 +142,10 @@ then
     echo "-- slurmctld is now active ..."
 
     echo "---> Starting the Slurm Node Daemon (slurmd) ..."
-    exec /usr/sbin/slurmd -D
+    exec /usr/sbin/slurmd
+
+    # Loop indefinitely
+    while true; do sleep 20; done
 fi
 
 exec "$@"

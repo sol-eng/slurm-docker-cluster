@@ -24,7 +24,7 @@ then
     chmod 0600 /etc/slurm/slurmdbd.conf
     chown slurm /etc/slurm/slurmdbd.conf
 
-    exec gosu slurm /usr/sbin/slurmdbd
+    sudo -u slurm /usr/sbin/slurmdbd
 
     # Loop indefinitely
     while true; do sleep 20; done

@@ -251,7 +251,7 @@ COPY rstudio/launcher.slurm.resources.conf /etc/rstudio
 COPY scripts/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
 COPY ssh/pubkey.pub /home/rstudio/.ssh/authorized_keys
-RUN chown rstudio:rstudio /home/rstudio/.ssh/authorized_keys
+RUN chown -R rstudio:rstudio /home/rstudio/.ssh
 
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 

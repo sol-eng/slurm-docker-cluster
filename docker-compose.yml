@@ -75,7 +75,7 @@ services:
     depends_on:
       - "slurmdbd"
 
-  rstudio1:
+  rstudio:
     image: mmayer123/slurm-docker-cluster:${PWB_VERSION:-2024.09.0-375.pro3}-slurm-${SLURM_VERSION:-23.11.3-1}-${DIST:-jammy}
     build:
       context: .
@@ -114,45 +114,6 @@ services:
     environment:
       RSP_LICENSE: ${RSP_LICENSE}
 
-
-  rstudio2:
-    image: mmayer123/slurm-docker-cluster:${PWB_VERSION:-2024.09.0-375.pro3}-slurm-${SLURM_VERSION:-23.11.3-1}-${DIST:-jammy}
-    build:
-      context: .
-      dockerfile: Dockerfile.compile
-      args:
-        SLURM_VERSION: ${SLURM_VERSION:-23.11.3-1}
-        PWB_VERSION: ${PWB_VERSION:-2024.09.0-375.pro3}
-        LAUNCHER_VERSION: ${LAUNCHER_VERSION}
-        DIST: ${DIST:-jammy}
-        DISTNUM: ${DISTNUM:-2204}
-    command: ["rstudio"]
-    container_name: slurm-rstudio2
-    hostname: rstudio2
-    privileged: true
-    volumes:
-      - etc_munge:/etc/munge
-      - etc_slurm:/etc/slurm
-      - slurm_jobdir:/data
-      - var_log_slurm:/var/log/slurm
-      - var_lib_rstudio_server:/var/lib/rstudio-server
-      - home:/home
-      - ${PWD}/rstudio/launcher.conf:/etc/rstudio/launcher.conf
-      - ${PWD}/rstudio/launcher.slurm.conf:/etc/rstudio/launcher.slurm.conf
-      - ${PWD}/rstudio/launcher.slurm.profiles.conf:/etc/rstudio/launcher.slurm.profiles.conf
-      - ${PWD}/rstudio/rserver.conf:/etc/rstudio/rserver.conf
-      - ${PWD}/rstudio/load-balancer:/etc/rstudio/load-balancer
-      - ${PWD}/rstudio/launcher.slurm.resources.conf:/etc/rstudio/launcher.slurm.resources.conf
-      - ${PWD}/rstudio/jupyter.conf:/etc/rstudio/jupyter.conf
-    expose:
-      - "8787"
-    ports:
-      - "8789:8787"
-    depends_on:
-      - "slurmctld"
-      - "postgres"
-    environment:
-      RSP_LICENSE: ${RSP_LICENSE}
 
   c1:
     image: mmayer123/slurm-docker-cluster:${PWB_VERSION:-2024.09.0-375.pro3}-slurm-${SLURM_VERSION:-23.11.3-1}-${DIST:-jammy}

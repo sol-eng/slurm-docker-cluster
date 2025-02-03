@@ -18,7 +18,7 @@ function stop() {
 	do
 		pushd env-$i
 		sudo docker-compose down  
-	    sudo docker volume ls | grep env-$i | awk '{print $2}' | xargs docker volume rm 
+	    sudo docker volume ls | grep env-$i | awk '{print $2}' | xargs sudo docker volume rm 
 		popd
 	done
     popd
@@ -27,17 +27,17 @@ function stop() {
 
 function mess() {
     # disable rstudio-launcher on env 1
-    sshpass -p BuildBattleMSP ssh -p 1001 rstudio@localhost sudo killall /usr/lib/rstudio-server/bin/rstudio-launcher
+    sshpass -p BuildBattleMSP ssh -o StrictHostKeyChecking=no -p 1001 rstudio@localhost sudo killall /usr/lib/rstudio-server/bin/rstudio-launcher
     # remove session components on env 2
-    sshpass -p BuildBattleMSP ssh -v -p 1002 rstudio@localhost ssh -o StrictHostKeyChecking=no c1 sudo rm -rf /usr/lib/rstudio-server
-    sshpass -p BuildBattleMSP ssh -v -p 1002 rstudio@localhost ssh -o StrictHostKeyChecking=no c2 sudo rm -rf /usr/lib/rstudio-server
+    sshpass -p BuildBattleMSP ssh -o StrictHostKeyChecking=no -p 1002 rstudio@localhost ssh -o StrictHostKeyChecking=no c1 sudo rm -rf /usr/lib/rstudio-server
+    sshpass -p BuildBattleMSP ssh -o StrictHostKeyChecking=no -p 1002 rstudio@localhost ssh -o StrictHostKeyChecking=no c2 sudo rm -rf /usr/lib/rstudio-server
 
     # kill slurmctld
-    sshpass -p BuildBattleMSP ssh -v -p 1003 rstudio@localhost ssh -o StrictHostKeyChecking=no slurmctld sudo killall slurmctld
+    sshpass -p BuildBattleMSP ssh -o StrictHostKeyChecking=no -p 1003 rstudio@localhost ssh -o StrictHostKeyChecking=no slurmctld sudo killall slurmctld
 
     # disable partition
-    sshpass -p BuildBattleMSP ssh -v -p 1004 rstudio@localhost sudo -u slurm scontrol update Partition=normal State=DOWN
+    sshpass -p BuildBattleMSP ssh -o StrictHostKeyChecking=no -p 1004 rstudio@localhost sudo -u slurm scontrol update Partition=normal State=DOWN
 
     # remove session callback address
-    pushd env-5 && sed -i 's/^launcher-sessions-call.*//' rstudio/rserver.conf && docker-compose up rstudio -d && popd
+    pushd ~/env-5 && sed -i 's/^launcher-sessions-call.*//' rstudio/rserver.conf && sudo docker-compose up rstudio -d && popd
     }

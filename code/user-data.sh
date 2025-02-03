@@ -10,12 +10,14 @@ done
 
 apt-get update
 
-apt-get install -y snap git 
+apt-get install -y snap git sshpass
 
 sleep 60
 snap install docker 
 
 echo "ubuntu ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/ubuntu
+
+echo "Defaults:%sudo env_keep += \"RSP_LICENSE\"" | sudo tee -a /etc/sudoers
 
 sudo -u ubuntu echo "export RSP_LICENSE=KAZG-PPFB-HH8S-SE8A-CP9J-F7GW-YWTA" >> /home/ubuntu/.bashrc
 

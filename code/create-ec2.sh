@@ -10,30 +10,37 @@ AMI_ID="ami-03fd334507439f4d1"
 
 SUBNET_ID="subnet-9bbd91c1" 
 
-SG_ID=`aws ec2 create-security-group \
-    --group-name build-battle-sg \
-    --description "Security group for Broken Build Battle in MSP" \
-    --tag-specifications "ResourceType=security-group,\
-        Tags=[{Key=Name,Value=build-battle-sg},${POSIT_TAGS}]" \
-    --vpc-id "${VPC_ID}" | jq -r '.GroupId' `
+SG_ID=`aws ec2 describe-security-groups \
+    --group-names build-battle-sg | jq -r '.SecurityGroups .[] .GroupId'`
 
-aws ec2 authorize-security-group-ingress \
-    --group-id "${SG_ID}" \
-    --protocol tcp \
-    --port 1000-1010 \
-    --cidr "0.0.0.0/0"
+if [ "x$SG_ID"=="x" ]; then
 
-aws ec2 authorize-security-group-ingress \
-    --group-id "${SG_ID}" \
-    --protocol tcp \
-    --port 8000-8010 \
-    --cidr "0.0.0.0/0"
+    SG_ID=`aws ec2 create-security-group \
+        --group-name build-battle-sg \
+        --description "Security group for Broken Build Battle in MSP" \
+        --tag-specifications "ResourceType=security-group,\
+            Tags=[{Key=Name,Value=build-battle-sg},${POSIT_TAGS}]" \
+        --vpc-id "${VPC_ID}" | jq -r '.GroupId' `
 
-aws ec2 authorize-security-group-ingress \
-    --group-id "${SG_ID}" \
-    --protocol tcp \
-    --port 22 \
-    --cidr "0.0.0.0/0"
+    aws ec2 authorize-security-group-ingress \
+        --group-id "${SG_ID}" \
+        --protocol tcp \
+        --port 1000-1010 \
+        --cidr "0.0.0.0/0"
+
+    aws ec2 authorize-security-group-ingress \
+        --group-id "${SG_ID}" \
+        --protocol tcp \
+        --port 8000-8010 \
+        --cidr "0.0.0.0/0"
+
+    aws ec2 authorize-security-group-ingress \
+        --group-id "${SG_ID}" \
+        --protocol tcp \
+        --port 22 \
+        --cidr "0.0.0.0/0"
+
+fi
 
 
 aws ec2 run-instances \

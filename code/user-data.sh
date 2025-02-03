@@ -7,7 +7,9 @@ setenforce permissive
 
 apt-get update
 
-apt-get install -y snap
+apt-get install -y snap git 
+
+sleep 60
 snap install docker 
 
 echo "ubuntu ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/ubuntu

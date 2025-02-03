@@ -13,7 +13,7 @@ SUBNET_ID="subnet-9bbd91c1"
 SG_ID=`aws ec2 describe-security-groups \
     --group-names build-battle-sg | jq -r '.SecurityGroups .[] .GroupId'`
 
-if [ "x$SG_ID"=="x" ]; then
+if [[ "x$SG_ID" == "x" ]]; then
 
     SG_ID=`aws ec2 create-security-group \
         --group-name build-battle-sg \

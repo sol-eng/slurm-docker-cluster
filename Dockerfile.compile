@@ -10,7 +10,7 @@ LABEL org.opencontainers.image.source="https://github.com/michaelmayer2/slurm-do
       maintainer="Michael Mayer"
 
 ARG GOSU_VERSION=1.11
-ARG R_VERSIONS="3.6.3 4.3.2"
+ARG R_VERSIONS="3.6.3 4.3.2 4.4.2"
 ARG PROXY
 ARG DIST="focal"
 ARG DISTNUM="2004"
@@ -45,7 +45,7 @@ RUN apt-get update -y && groupadd  -g 999 rstudio-server && \
 ARG LAUNCHER_VERSION
 RUN if [ ! -z ${LAUNCHER_VERSION} ]; then \
     cd /tmp && \
-    curl -O https://cdn.rstudio.com/launcher/releases/jammy/launcher-jammy-amd64-2.16.0-136.tar.gz && \
+    curl -O https://cdn.rstudio.com/launcher/releases/${DIST}/launcher-${DIST}-amd64-${LAUNCHER_VERSION}.tar.gz && \
     tar xvfz launcher-* -C /usr/lib/rstudio-server/bin  --strip-components=1 && \
     rm -f launcher-* ; \
     fi
@@ -243,7 +243,7 @@ RUN groupadd rstudio -g 2048 \
         && useradd -m rstudio -s /bin/bash -u 2048 -g 2048\
         && bash -c "echo -e \"rstudio\\nrstudio\" | passwd rstudio"
 
-RUN if [ ! -f /usr/lib64/slurm/select_cons_res.so ]; then sed -i 's/cons_res/cons_tres/' /etc/slurm/slurm.conf; fi
+RUN if [ -f /usr/lib64/slurm/select_cons_tres.so ]; then sed -i 's/cons_res/cons_tres/' /etc/slurm/slurm.conf; fi
 
 
 COPY rstudio/launcher.slurm.resources.conf /etc/rstudio

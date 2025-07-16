@@ -98,7 +98,6 @@ services:
       - ./rstudio/launcher.slurm.conf:/etc/rstudio/launcher.slurm.conf
       - ./rstudio/launcher.slurm.profiles.conf:/etc/rstudio/launcher.slurm.profiles.conf
       - ./rstudio/rserver.conf:/etc/rstudio/rserver.conf
-      - ./rstudio/load-balancer:/etc/rstudio/load-balancer
       - ./rstudio/launcher.slurm.resources.conf:/etc/rstudio/launcher.slurm.resources.conf
       - ./rstudio/jupyter.conf:/etc/rstudio/jupyter.conf
     expose:

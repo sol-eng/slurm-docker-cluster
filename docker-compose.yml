@@ -25,13 +25,13 @@ services:
       - "5432"
 
   slurmdbd:
-    image: mmayer123/slurm-docker-cluster:${PWB_VERSION:-2024.12.1-563.pro1}-slurm-${SLURM_VERSION:-24.11.1-1}-${DIST:-jammy}
+    image: mmayer123/slurm-docker-cluster:${PWB_VERSION:-2025.05.2-513.pro15}-slurm-${SLURM_VERSION:-25.05.5-1}-${DIST:-jammy}
     build:
       context: .
       dockerfile: Dockerfile.compile 
       args:
-        SLURM_VERSION: ${SLURM_VERSION:-24.11.1-1}
-        PWB_VERSION: ${PWB_VERSION:-2024.12.1-563.pro1}
+        SLURM_VERSION: ${SLURM_VERSION:-25.05.5-1}
+        PWB_VERSION: ${PWB_VERSION:-2025.05.2-513.pro15}
         LAUNCHER_VERSION: ${LAUNCHER_VERSION}
         DIST: ${DIST:-jammy}
         DISTNUM: ${DISTNUM:-2204}
@@ -48,13 +48,13 @@ services:
       - mysql
 
   slurmctld:
-    image: mmayer123/slurm-docker-cluster:${PWB_VERSION:-2024.12.1-563.pro1}-slurm-${SLURM_VERSION:-24.11.1-1}-${DIST:-jammy}
+    image: mmayer123/slurm-docker-cluster:${PWB_VERSION:-2025.05.2-513.pro15}-slurm-${SLURM_VERSION:-25.05.5-1}-${DIST:-jammy} 
     build:
       context: .
       dockerfile: Dockerfile.compile
       args:
-        SLURM_VERSION: ${SLURM_VERSION:-24.11.1-1}
-        PWB_VERSION: ${PWB_VERSION:-2024.12.1-563.pro1}
+        SLURM_VERSION: ${SLURM_VERSION:-25.05.5-1}
+        PWB_VERSION: ${PWB_VERSION:-2025.05.2-513.pro15}
         LAUNCHER_VERSION: ${LAUNCHER_VERSION}
         DIST: ${DIST:-jammy}
         DISTNUM: ${DISTNUM:-2204}
@@ -74,13 +74,13 @@ services:
       - "slurmdbd"
 
   rstudio:
-    image: mmayer123/slurm-docker-cluster:${PWB_VERSION:-2024.12.1-563.pro1}-slurm-${SLURM_VERSION:-24.11.1-1}-${DIST:-jammy}
+    image: mmayer123/slurm-docker-cluster:${PWB_VERSION:-2025.05.2-513.pro15}-slurm-${SLURM_VERSION:-25.05.5-1}-${DIST:-jammy}
     build:
       context: .
       dockerfile: Dockerfile.compile
       args:
-        SLURM_VERSION: ${SLURM_VERSION:-24.11.1-1}
-        PWB_VERSION: ${PWB_VERSION:-2024.12.1-563.pro1}
+        SLURM_VERSION: ${SLURM_VERSION:-25.05.5-1}
+        PWB_VERSION: ${PWB_VERSION:-2025.05.2-513.pro15}
         LAUNCHER_VERSION: ${LAUNCHER_VERSION}
         DIST: ${DIST:-jammy}
         DISTNUM: ${DISTNUM:-2204}
@@ -114,13 +114,13 @@ services:
 
 
   c1:
-    image: mmayer123/slurm-docker-cluster:${PWB_VERSION:-2024.12.1-563.pro1}-slurm-${SLURM_VERSION:-24.11.1-1}-${DIST:-jammy}
+    image: mmayer123/slurm-docker-cluster:${PWB_VERSION:-2025.05.2-513.pro15}-slurm-${SLURM_VERSION:-25.05.5-1}-${DIST:-jammy}
     build:
       context: .
       dockerfile: Dockerfile.compile
       args:
-        SLURM_VERSION: ${SLURM_VERSION:-24.11.1-1}
-        PWB_VERSION: ${PWB_VERSION:-2024.12.1-563.pro1}
+        SLURM_VERSION: ${SLURM_VERSION:-25.05.5-1}
+        PWB_VERSION: ${PWB_VERSION:-2025.05.2-513.pro15}
         LAUNCHER_VERSION: ${LAUNCHER_VERSION}
         DIST: ${DIST:-jammy}
         DISTNUM: ${DISTNUM:-2204}
@@ -141,13 +141,13 @@ services:
       - "slurmctld"
 
   c2:
-    image: mmayer123/slurm-docker-cluster:${PWB_VERSION:-2024.12.1-563.pro1}-slurm-${SLURM_VERSION:-24.11.1-1}-${DIST:-jammy}
+    image: mmayer123/slurm-docker-cluster:${PWB_VERSION:-2025.05.2-513.pro15}-slurm-${SLURM_VERSION:-25.05.5-1}-${DIST:-jammy}
     build:
       context: .
       dockerfile: Dockerfile.compile
       args:
-        SLURM_VERSION: ${SLURM_VERSION:-24.11.1-1}
-        PWB_VERSION: ${PWB_VERSION:-2024.12.1-563.pro1}
+        SLURM_VERSION: ${SLURM_VERSION:-25.05.5-1}
+        PWB_VERSION: ${PWB_VERSION:-2025.05.2-513.pro15}
         LAUNCHER_VERSION: ${LAUNCHER_VERSION}
         DIST: ${DIST:-jammy}
         DISTNUM: ${DISTNUM:-2204}

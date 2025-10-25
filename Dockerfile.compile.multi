@@ -10,7 +10,7 @@ LABEL org.opencontainers.image.source="https://github.com/michaelmayer2/slurm-do
       maintainer="Michael Mayer"
 
 ARG GOSU_VERSION=1.11
-ARG R_VERSIONS="3.6.3 4.3.2 4.4.2"
+ARG R_VERSIONS="3.6.3 4.3.2 4.4.2 4.5.1"
 ARG PROXY
 ARG DIST="focal"
 ARG DISTNUM="2004"
@@ -66,10 +66,13 @@ ARG SLURM_VERSION
 
 ARG CLUSTER
 
+COPY slurm/munge.patch /
+
 ## Build SLURM from source and add folders and permissions
 RUN mkdir -p /opt/slurm/${CLUSTER}/etc && mkdir -p /tmp/build && cd /tmp/build \
     && bash -c "git clone --depth 1 -b slurm-\${SLURM_VERSION//./-} https://github.com/SchedMD/slurm.git" \
     && cd slurm \
+    && patch -p1 < /munge.patch \
     && echo "Configuring SLURM ${SLURM_VERSION}" \
     && bash -c "./configure --enable-debug --prefix=/opt/slurm/${CLUSTER} --sysconfdir=/opt/slurm/${CLUSTER}/etc --with-mysql_config=/usr/bin  --libdir=/opt/slurm/${CLUSTER}/lib64 >& /opt/slurm/${CLUSTER}/etc/.config.log" \
     && echo "Building SLURM ${SLURM_VERSION}" \
@@ -113,6 +116,8 @@ ConstrainRAMSpace=yes" > /opt/slurm/${CLUSTER}/etc/cgroup.conf
 RUN chmod 0600 /opt/slurm/${CLUSTER}/etc/slurmdbd.conf
 RUN rm -rf /etc/munge
 
+RUN echo "export PATH=\$PATH:/opt/slurm/${CLUSTER}/bin" >> /etc/profile.d/slurm.sh
+
 
 
 ## Install gosu
@@ -135,14 +140,13 @@ RUN if [ ! -f /usr/lib64/slurm/select_cons_res.so ]; then sed -i 's/cons_res/con
 
 RUN apt-get install -y openssh-server
 
-COPY rstudio/launcher.slurm.resources.conf /etc/rstudio
 COPY scripts/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
 ## Add test user rstudio
 
 RUN groupadd rstudio -g 2048 \
         && useradd -m rstudio -s /bin/bash -u 2048 -g 2048\
-        && bash -c "echo -e \"BuildBattleMSP\\nBuildBattleMSP\" | passwd rstudio"
+        && echo "rstudio:rstudio" | chpasswd
 
 COPY ssh/pubkey.pub /home/rstudio/.ssh/authorized_keys
 RUN chown -R rstudio:rstudio /home/rstudio/.ssh
@@ -162,6 +166,59 @@ RUN set -ex \
        sudo net-tools iputils-ping postfix mailutils \
     && apt clean all \
     && rm -rf /var/cache/apt
+
+
+COPY rstudio/create.R /tmp/create.R 
+
+
+RUN apt-get update -y && \
+	apt-get install -y gdebi-core curl wget && \ 
+	IFS=" "; for R_VERSION in $R_VERSIONS ; \
+	do \
+		curl -O https://cdn.rstudio.com/r/ubuntu-${DISTNUM}/pkgs/r-${R_VERSION}_1_amd64.deb && \
+		gdebi -n r-${R_VERSION}_1_amd64.deb && \
+		rm -f r-${R_VERSION}_1_amd64.deb && \
+		/opt/R/$R_VERSION/bin/Rscript /tmp/create.R ;\
+	done && \
+	apt clean all && \
+        rm -rf /var/cache/apt
+
+# Install posit workbench session components
+ARG PWB_VERSION
+
+RUN apt-get update && apt-get install -y curl libcurl4-gnutls-dev libssl-dev libpq5 rrdtool && rm -rf /var/lib/apt/lists/*
+
+RUN curl -O  https://download1.rstudio.org/session/jammy/amd64/rsp-session-jammy-${PWB_VERSION}-amd64.tar.gz && \
+    mkdir -p /usr/lib/rstudio-server && \
+    tar -zxvf ./rsp-session-jammy-${PWB_VERSION}-amd64.tar.gz --strip-components=1 -C /usr/lib/rstudio-server && \
+    rm -f ./rsp-session-jammy-${PWB_VERSION}-amd64.tar.gz
+
+
+## Add VSCode and Jupyter/Python 
+
+### Install Python  -------------------------------------------------------------#
+
+ARG PYTHON_VERSION=3.11.6
+RUN curl -O https://cdn.rstudio.com/python/ubuntu-${DISTNUM}/pkgs/python-${PYTHON_VERSION}_1_amd64.deb && \
+    apt-get update && gdebi -n python-${PYTHON_VERSION}_1_amd64.deb && apt clean all && \
+    rm -rf /var/cache/apt && rm -f python-${PYTHON_VERSION}_1_amd64.deb
+
+RUN /opt/python/${PYTHON_VERSION}/bin/pip install --upgrade pip 
+
+RUN /opt/python/${PYTHON_VERSION}/bin/pip install \
+    jupyter \
+    jupyterlab \
+    workbench_jupyterlab \
+    rsp_jupyter \
+    rsconnect_jupyter \
+    rsconnect_python 
+
+RUN /opt/python/${PYTHON_VERSION}/bin/jupyter-nbextension install --sys-prefix --py rsp_jupyter && \
+    /opt/python/${PYTHON_VERSION}/bin/jupyter-nbextension enable --sys-prefix --py rsp_jupyter && \
+    /opt/python/${PYTHON_VERSION}/bin/jupyter-nbextension install --sys-prefix --py rsconnect_jupyter && \
+    /opt/python/${PYTHON_VERSION}/bin/jupyter-nbextension enable --sys-prefix --py rsconnect_jupyter && \
+    /opt/python/${PYTHON_VERSION}/bin/jupyter-serverextension enable --sys-prefix --py rsconnect_jupyter
+
 
 RUN sed -i "s/XXX/${CLUSTER}/g" /usr/local/bin/docker-entrypoint.sh
 

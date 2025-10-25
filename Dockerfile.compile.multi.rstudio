@@ -10,7 +10,7 @@ LABEL org.opencontainers.image.source="https://github.com/michaelmayer2/slurm-do
       maintainer="Michael Mayer"
 
 ARG GOSU_VERSION=1.11
-ARG R_VERSIONS="3.6.3 4.3.2 4.4.2"
+ARG R_VERSIONS="3.6.3 4.3.2 4.4.2 4.5.1"
 ARG PROXY
 ARG DIST="focal"
 ARG DISTNUM="2004"
@@ -62,6 +62,8 @@ RUN set -ex \
     && apt clean all \
     && rm -rf /var/cache/apt
 
+COPY slurm/munge.patch /
+
 ARG SLURM_VERSION1
 
 ENV SLURM_VERSION=${SLURM_VERSION1}
@@ -71,6 +73,7 @@ ENV CLUSTER=1
 RUN mkdir -p /opt/slurm/${CLUSTER}/etc && mkdir -p /tmp/build && cd /tmp/build \
     && bash -c "git clone --depth 1 -b slurm-\${SLURM_VERSION//./-} https://github.com/SchedMD/slurm.git" \
     && cd slurm \
+    && patch -p1 < /munge.patch \
     && echo "Configuring SLURM ${SLURM_VERSION}" \
     && bash -c "./configure --enable-debug --prefix=/opt/slurm/${CLUSTER} --sysconfdir=/opt/slurm/${CLUSTER}/etc --with-mysql_config=/usr/bin  --libdir=/opt/slurm/${CLUSTER}/lib64 >& /opt/slurm/${CLUSTER}/etc/.config.log" \
     && echo "Building SLURM ${SLURM_VERSION}" \
@@ -110,6 +113,7 @@ ENV CLUSTER=2
 RUN mkdir -p /opt/slurm/${CLUSTER}/etc && mkdir -p /tmp/build && cd /tmp/build \
     && bash -c "git clone --depth 1 -b slurm-\${SLURM_VERSION//./-} https://github.com/SchedMD/slurm.git" \
     && cd slurm \
+    && patch -p1 < /munge.patch \
     && echo "Configuring SLURM ${SLURM_VERSION}" \
     && bash -c "./configure --enable-debug --prefix=/opt/slurm/${CLUSTER} --sysconfdir=/opt/slurm/${CLUSTER}/etc --with-mysql_config=/usr/bin  --libdir=/opt/slurm/${CLUSTER}/lib64 >& /opt/slurm/${CLUSTER}/etc/.config.log" \
     && echo "Building SLURM ${SLURM_VERSION}" \
@@ -137,22 +141,19 @@ RUN mkdir -p /opt/slurm/${CLUSTER}/etc && mkdir -p /tmp/build && cd /tmp/build \
         /var/lib/slurmd/fed_mgr_state \
     && chown -R slurm:slurm /var/*/slurm* 
 
-
 RUN apt-get install -y openssh-server
 
-COPY rstudio/launcher.slurm.resources.conf /etc/rstudio
+
 COPY scripts/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
 ## Add test user rstudio
 
 RUN groupadd rstudio -g 2048 \
         && useradd -m rstudio -s /bin/bash -u 2048 -g 2048\
-        && bash -c "echo -e \"BuildBattleMSP\\nBuildBattleMSP\" | passwd rstudio"
+        && echo "rstudio:rstudio" | chpasswd 
 
 COPY ssh/pubkey.pub /home/rstudio/.ssh/authorized_keys
 RUN chown -R rstudio:rstudio /home/rstudio/.ssh
-
-
 
 ## Configure a mail client and add a couple of nice to have tools
 
@@ -167,6 +168,92 @@ RUN set -ex \
        sudo net-tools iputils-ping postfix mailutils \
     && apt clean all \
     && rm -rf /var/cache/apt
+
+
+
+COPY rstudio/create.R /tmp/create.R 
+
+
+RUN apt-get update -y && \
+	apt-get install -y gdebi-core curl wget && \ 
+	IFS=" "; for R_VERSION in $R_VERSIONS ; \
+	do \
+		curl -O https://cdn.rstudio.com/r/ubuntu-${DISTNUM}/pkgs/r-${R_VERSION}_1_amd64.deb && \
+		gdebi -n r-${R_VERSION}_1_amd64.deb && \
+		rm -f r-${R_VERSION}_1_amd64.deb && \
+		/opt/R/$R_VERSION/bin/Rscript /tmp/create.R ;\
+	done && \
+	apt clean all && \
+        rm -rf /var/cache/apt
+   
+ARG PWB_VERSION
+RUN apt-get update -y && groupadd  -g 999 rstudio-server && \ 
+   	useradd -g 999 -m -u 999 -s /bin/bash rstudio-server && \
+        curl -O https://s3.amazonaws.com/rstudio-ide-build/server/${DIST}/amd64/rstudio-workbench-${PWB_VERSION}-amd64.deb && \
+	gdebi -n rstudio-workbench-${PWB_VERSION}-amd64.deb && \
+	rm -f rstudio-workbench-${PWB_VERSION}-amd64.deb && \
+    	apt clean all && \
+    	rm -rf /var/cache/apt
+
+
+
+## Add VSCode and Jupyter/Python 
+
+### Install Python  -------------------------------------------------------------#
+
+ARG PYTHON_VERSION=3.11.6
+RUN curl -O https://cdn.rstudio.com/python/ubuntu-${DISTNUM}/pkgs/python-${PYTHON_VERSION}_1_amd64.deb && \
+    apt-get update && gdebi -n python-${PYTHON_VERSION}_1_amd64.deb && apt clean all && \
+    rm -rf /var/cache/apt && rm -f python-${PYTHON_VERSION}_1_amd64.deb
+
+RUN /opt/python/${PYTHON_VERSION}/bin/pip install --upgrade pip 
+
+RUN /opt/python/${PYTHON_VERSION}/bin/pip install \
+    jupyter \
+    jupyterlab \
+    workbench_jupyterlab \
+    rsp_jupyter \
+    rsconnect_jupyter \
+    rsconnect_python 
+
+RUN /opt/python/${PYTHON_VERSION}/bin/jupyter-nbextension install --sys-prefix --py rsp_jupyter && \
+    /opt/python/${PYTHON_VERSION}/bin/jupyter-nbextension enable --sys-prefix --py rsp_jupyter && \
+    /opt/python/${PYTHON_VERSION}/bin/jupyter-nbextension install --sys-prefix --py rsconnect_jupyter && \
+    /opt/python/${PYTHON_VERSION}/bin/jupyter-nbextension enable --sys-prefix --py rsconnect_jupyter && \
+    /opt/python/${PYTHON_VERSION}/bin/jupyter-serverextension enable --sys-prefix --py rsconnect_jupyter
+
+
+    RUN mkdir -p /etc/rstudio
+COPY rstudio/launcher*.conf /etc/rstudio/
+COPY rstudio/rserver.conf /etc/rstudio/
+COPY rstudio/jupyter.conf /etc/rstudio/
+RUN chmod 0600 /etc/rstudio/rserver.conf
+COPY rstudio/database.conf /etc/rstudio/database.conf
+RUN chmod 0600 /etc/rstudio/database.conf
+
+## Configure launcher.* and secure-cookie-key
+
+RUN apt-get update && apt-get install -y uuid && \
+	apt clean all && \
+	rm -rf /var/cache/apt
+
+RUN echo `uuid` > /etc/rstudio/secure-cookie-key && \
+	chown rstudio-server:rstudio-server \
+		/etc/rstudio/secure-cookie-key && \
+    chmod 0600 /etc/rstudio/secure-cookie-key
+
+RUN openssl genpkey -algorithm RSA \
+		-out /etc/rstudio/launcher.pem \
+		-pkeyopt rsa_keygen_bits:2048 && \
+	chown rstudio-server:rstudio-server \
+		/etc/rstudio/launcher.pem && \
+        chmod 0600 /etc/rstudio/launcher.pem
+
+RUN openssl rsa -in /etc/rstudio/launcher.pem \
+		-pubout > /etc/rstudio/launcher.pub && \
+	chown rstudio-server:rstudio-server \
+		/etc/rstudio/launcher.pub
+
 
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 

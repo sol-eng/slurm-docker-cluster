@@ -130,12 +130,17 @@ then
 
     echo "---> Starting RSW (launcher + server) ..."
 
-    until 2>/dev/null >/dev/tcp/slurmctldXXX/6817
+    until 2>/dev/null >/dev/tcp/slurmctld1/6817
     do
-        echo "-- slurmctld is not available.  Sleeping ..."
+        echo "-- slurmctld on cluster1 is not available.  Sleeping ..."
         sleep 2
     done
 
+    until 2>/dev/null >/dev/tcp/slurmctld2/6817
+    do
+        echo "-- slurmctld on cluster2 is not available.  Sleeping ..."
+        sleep 2
+    done
     echo "---> Activating the RSW License ..."
     /usr/lib/rstudio-server/bin/license-manager activate $RSP_LICENSE
 

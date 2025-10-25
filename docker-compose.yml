@@ -27,7 +27,7 @@ services:
 
 
   slurmdbd1:
-    image: mmayer123/slurm-docker-cluster:${SLURM_VERSION1:-24.11.6-1}-${DIST:-jammy}
+    image: mmayer123/slurm-docker-cluster:${PWB_VERSION:-2025.09.1-401.pro2}-slurm-${SLURM_VERSION1:-24.11.6-1}-${DIST:-jammy}
     build:
       context: .
       dockerfile: Dockerfile.compile.multi
@@ -36,6 +36,7 @@ services:
         DIST: ${DIST:-jammy}
         DISTNUM: ${DISTNUM:-2204}
         CLUSTER: 1
+        PWB_VERSION: ${PWB_VERSION:-2025.09.1-401.pro2}
     command: ["slurmdbd"]
     hostname: slurmdbd1
     volumes:
@@ -48,7 +49,7 @@ services:
       - mysql1
 
   slurmctld1:
-    image: mmayer123/slurm-docker-cluster:${SLURM_VERSION1:-24.11.6-1}-${DIST:-jammy}
+    image: mmayer123/slurm-docker-cluster:${PWB_VERSION:-2025.09.1-401.pro2}-slurm-${SLURM_VERSION1:-24.11.6-1}-${DIST:-jammy}
     build:
       context: .
       dockerfile: Dockerfile.compile.multi
@@ -57,6 +58,7 @@ services:
         DIST: ${DIST:-jammy}
         DISTNUM: ${DISTNUM:-2204}
         CLUSTER: 1
+        PWB_VERSION: ${PWB_VERSION:-2025.09.1-401.pro2}
     command: ["slurmctld"]
     hostname: slurmctld1
     privileged: true 
@@ -72,7 +74,7 @@ services:
 
 
   c11:
-    image: mmayer123/slurm-docker-cluster:${SLURM_VERSION1:-24.11.6-1}-${DIST:-jammy}
+    image: mmayer123/slurm-docker-cluster:${PWB_VERSION:-2025.09.1-401.pro2}-slurm-${SLURM_VERSION1:-24.11.6-1}-${DIST:-jammy}
     build:
       context: .
       dockerfile: Dockerfile.compile.multi
@@ -81,6 +83,7 @@ services:
         DIST: ${DIST:-jammy}
         DISTNUM: ${DISTNUM:-2204}
         CLUSTER: 1
+        PWB_VERSION: ${PWB_VERSION:-2025.09.1-401.pro2}
     command: ["slurmd"]
     hostname: c11
     privileged: true
@@ -95,7 +98,7 @@ services:
       - "slurmctld1"
 
   c12:
-    image: mmayer123/slurm-docker-cluster:${SLURM_VERSION1:-24.11.6-1}-${DIST:-jammy}
+    image: mmayer123/slurm-docker-cluster:${PWB_VERSION:-2025.09.1-401.pro2}-slurm-${SLURM_VERSION1:-24.11.6-1}-${DIST:-jammy}
     build:
       context: .
       dockerfile: Dockerfile.compile.multi
@@ -104,6 +107,7 @@ services:
         DIST: ${DIST:-jammy}
         DISTNUM: ${DISTNUM:-2204}
         CLUSTER: 1
+        PWB_VERSION: ${PWB_VERSION:-2025.09.1-401.pro2}
     command: ["slurmd"]
     hostname: c12
     privileged: true
@@ -132,7 +136,7 @@ services:
 
 
   slurmdbd2:
-    image: mmayer123/slurm-docker-cluster:${SLURM_VERSION2:-23.11.11-1}-${DIST:-jammy}
+    image: mmayer123/slurm-docker-cluster:${PWB_VERSION:-2025.09.1-401.pro2}-slurm-${SLURM_VERSION2:-23.11.11-1}-${DIST:-jammy}
     build:
       context: .
       dockerfile: Dockerfile.compile.multi
@@ -141,6 +145,7 @@ services:
         DIST: ${DIST:-jammy}
         DISTNUM: ${DISTNUM:-2204}
         CLUSTER: 2
+        PWB_VERSION: ${PWB_VERSION:-2025.09.1-401.pro2}
     command: ["slurmdbd"]
     hostname: slurmdbd2
     volumes:
@@ -153,7 +158,7 @@ services:
       - mysql2
 
   slurmctld2:
-    image: mmayer123/slurm-docker-cluster:${SLURM_VERSION2:-23.11.11-1}-${DIST:-jammy}
+    image: mmayer123/slurm-docker-cluster:${PWB_VERSION:-2025.09.1-401.pro2}-slurm-${SLURM_VERSION2:-23.11.11-1}-${DIST:-jammy}
     build:
       context: .
       dockerfile: Dockerfile.compile.multi
@@ -162,6 +167,7 @@ services:
         DIST: ${DIST:-jammy}
         DISTNUM: ${DISTNUM:-2204}
         CLUSTER: 2
+        PWB_VERSION: ${PWB_VERSION:-2025.09.1-401.pro2}
     command: ["slurmctld"]
     hostname: slurmctld2
     privileged: true 
@@ -177,7 +183,7 @@ services:
 
 
   c21:
-    image: mmayer123/slurm-docker-cluster:${SLURM_VERSION2:-23.11.11-1}-${DIST:-jammy}
+    image: mmayer123/slurm-docker-cluster:${PWB_VERSION:-2025.09.1-401.pro2}-slurm-${SLURM_VERSION2:-23.11.11-1}-${DIST:-jammy}
     build:
       context: .
       dockerfile: Dockerfile.compile.multi
@@ -186,6 +192,7 @@ services:
         DIST: ${DIST:-jammy}
         DISTNUM: ${DISTNUM:-2204}
         CLUSTER: 2
+        PWB_VERSION: ${PWB_VERSION:-2025.09.1-401.pro2}
     command: ["slurmd"]
     hostname: c21
     privileged: true
@@ -200,7 +207,7 @@ services:
       - "slurmctld2"
 
   c22:
-    image: mmayer123/slurm-docker-cluster:${SLURM_VERSION2:-23.11.11-1}-${DIST:-jammy}
+    image: mmayer123/slurm-docker-cluster:${PWB_VERSION:-2025.09.1-401.pro2}-slurm-${SLURM_VERSION2:-23.11.11-1}-${DIST:-jammy}
     build:
       context: .
       dockerfile: Dockerfile.compile.multi
@@ -209,6 +216,7 @@ services:
         DIST: ${DIST:-jammy}
         DISTNUM: ${DISTNUM:-2204}
         CLUSTER: 2
+        PWB_VERSION: ${PWB_VERSION:-2025.09.1-401.pro2}
     command: ["slurmd"]
     hostname: c22
     privileged: true
@@ -224,7 +232,7 @@ services:
 
 
   rstudio:
-    image: mmayer123/slurm-docker-cluster:${SLURM_VERSION1:-24.11.6-1}-${SLURM_VERSION2:-23.11.11-1}-${DIST:-jammy}
+    image: mmayer123/slurm-docker-cluster:${PWB_VERSION:-2025.09.1-401.pro2}-slurm-${SLURM_VERSION1:-24.11.6-1}-${SLURM_VERSION2:-23.11.11-1}-${DIST:-jammy}
     build:
       context: .
       dockerfile: Dockerfile.compile.multi.rstudio
@@ -233,6 +241,7 @@ services:
         SLURM_VERSION2: ${SLURM_VERSION2:-23.11.11-1}
         DIST: ${DIST:-jammy}
         DISTNUM: ${DISTNUM:-2204}
+        PWB_VERSION: ${PWB_VERSION:-2025.09.1-401.pro2}
     command: ["rstudio"]
     hostname: rstudio
     privileged: true
@@ -244,10 +253,16 @@ services:
       - home:/home
     expose:
       - "6818"
+      - "8787"
       - "22"
+    ports:
+      - "8888:8787"
+    environment:
+      RSP_LICENSE: ${RSP_LICENSE}
     depends_on:
       - "c11"
       - "c21"
+      - "postgres"
 
 
 

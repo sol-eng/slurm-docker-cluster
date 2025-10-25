@@ -1,16 +1,5 @@
-version: "2.2"
-
 services:
-  mysql:
-    image: mysql:5.7
-    hostname: mysql
-    environment:
-      MYSQL_RANDOM_ROOT_PASSWORD: "yes"
-      MYSQL_DATABASE: slurm_acct_db
-      MYSQL_USER: slurm
-      MYSQL_PASSWORD: password
-    volumes:
-      - var_lib_mysql:/var/lib/mysql
+
 
   postgres:
     image: postgres:14.5
@@ -23,157 +12,253 @@ services:
       - var_lib_postgres:/var/lib/postgres
     expose:
       - "5432"
+ 
+  mysql1:
+    image: mysql:5.7
+    hostname: mysql
+    environment:
+      MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+      MYSQL_DATABASE: slurm_acct_db
+      MYSQL_USER: slurm
+      MYSQL_PASSWORD: password
+    volumes:
+      - var_lib_mysql1:/var/lib/mysql
 
-  slurmdbd:
-    image: mmayer123/slurm-docker-cluster:${PWB_VERSION:-2025.05.2-513.pro15}-slurm-${SLURM_VERSION:-25.05.5-1}-${DIST:-jammy}
+
+
+  slurmdbd1:
+    image: mmayer123/slurm-docker-cluster:${SLURM_VERSION1:-24.11.6-1}-${DIST:-jammy}
     build:
       context: .
-      dockerfile: Dockerfile.compile 
+      dockerfile: Dockerfile.compile.multi
       args:
-        SLURM_VERSION: ${SLURM_VERSION:-25.05.5-1}
-        PWB_VERSION: ${PWB_VERSION:-2025.05.2-513.pro15}
-        LAUNCHER_VERSION: ${LAUNCHER_VERSION}
+        SLURM_VERSION: ${SLURM_VERSION1:-24.11.6-1}
         DIST: ${DIST:-jammy}
         DISTNUM: ${DISTNUM:-2204}
+        CLUSTER: 1
     command: ["slurmdbd"]
-    hostname: slurmdbd
+    hostname: slurmdbd1
     volumes:
-      - etc_munge:/etc/munge
-      - etc_slurm:/etc/slurm
-      - var_log_slurm:/var/log/slurm
+      - etc_munge1:/etc/munge1
+      - etc_slurm1:/opt/slurm/1/etc
     expose:
       - "6819"
       - "22"
     depends_on:
-      - mysql
+      - mysql1
 
-  slurmctld:
-    image: mmayer123/slurm-docker-cluster:${PWB_VERSION:-2025.05.2-513.pro15}-slurm-${SLURM_VERSION:-25.05.5-1}-${DIST:-jammy} 
+  slurmctld1:
+    image: mmayer123/slurm-docker-cluster:${SLURM_VERSION1:-24.11.6-1}-${DIST:-jammy}
     build:
       context: .
-      dockerfile: Dockerfile.compile
+      dockerfile: Dockerfile.compile.multi
       args:
-        SLURM_VERSION: ${SLURM_VERSION:-25.05.5-1}
-        PWB_VERSION: ${PWB_VERSION:-2025.05.2-513.pro15}
-        LAUNCHER_VERSION: ${LAUNCHER_VERSION}
+        SLURM_VERSION: ${SLURM_VERSION1:-24.11.6-1}
         DIST: ${DIST:-jammy}
         DISTNUM: ${DISTNUM:-2204}
+        CLUSTER: 1
     command: ["slurmctld"]
-    hostname: slurmctld
+    hostname: slurmctld1
     privileged: true 
     volumes:
-      - etc_munge:/etc/munge
-      - etc_slurm:/etc/slurm
-      - slurm_jobdir:/data
-      - var_log_slurm:/var/log/slurm
+      - etc_munge1:/etc/munge1
+      - etc_slurm1:/opt/slurm/1/etc
       - home:/home
     expose:
       - "6817"
       - "22"
     depends_on:
-      - "slurmdbd"
+      - "slurmdbd1"
 
-  rstudio:
-    image: mmayer123/slurm-docker-cluster:${PWB_VERSION:-2025.05.2-513.pro15}-slurm-${SLURM_VERSION:-25.05.5-1}-${DIST:-jammy}
+
+  c11:
+    image: mmayer123/slurm-docker-cluster:${SLURM_VERSION1:-24.11.6-1}-${DIST:-jammy}
     build:
       context: .
-      dockerfile: Dockerfile.compile
+      dockerfile: Dockerfile.compile.multi
       args:
-        SLURM_VERSION: ${SLURM_VERSION:-25.05.5-1}
-        PWB_VERSION: ${PWB_VERSION:-2025.05.2-513.pro15}
-        LAUNCHER_VERSION: ${LAUNCHER_VERSION}
+        SLURM_VERSION: ${SLURM_VERSION1:-24.11.6-1}
+        DIST: ${DIST:-jammy}
+        DISTNUM: ${DISTNUM:-2204}
+        CLUSTER: 1
+    command: ["slurmd"]
+    hostname: c11
+    privileged: true
+    volumes:
+      - etc_munge1:/etc/munge1
+      - etc_slurm1:/opt/slurm/1/etc
+      - home:/home
+    expose:
+      - "6818"
+      - "22"
+    depends_on:
+      - "slurmctld1"
+
+  c12:
+    image: mmayer123/slurm-docker-cluster:${SLURM_VERSION1:-24.11.6-1}-${DIST:-jammy}
+    build:
+      context: .
+      dockerfile: Dockerfile.compile.multi
+      args:
+        SLURM_VERSION: ${SLURM_VERSION1:-24.11.6-1}
+        DIST: ${DIST:-jammy}
+        DISTNUM: ${DISTNUM:-2204}
+        CLUSTER: 1
+    command: ["slurmd"]
+    hostname: c12
+    privileged: true
+    volumes:
+      - etc_munge1:/etc/munge1
+      - etc_slurm1:/opt/slurm/1/etc
+      - home:/home
+    expose:
+      - "6818"
+      - "22"
+    depends_on:
+      - "slurmctld1"
+
+
+  mysql2:
+    image: mysql:5.7
+    hostname: mysql
+    environment:
+      MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+      MYSQL_DATABASE: slurm_acct_db
+      MYSQL_USER: slurm
+      MYSQL_PASSWORD: password
+    volumes:
+      - var_lib_mysql2:/var/lib/mysql
+
+
+
+  slurmdbd2:
+    image: mmayer123/slurm-docker-cluster:${SLURM_VERSION2:-23.11.11-1}-${DIST:-jammy}
+    build:
+      context: .
+      dockerfile: Dockerfile.compile.multi
+      args:
+        SLURM_VERSION: ${SLURM_VERSION2:-23.11.11-1}
+        DIST: ${DIST:-jammy}
+        DISTNUM: ${DISTNUM:-2204}
+        CLUSTER: 2
+    command: ["slurmdbd"]
+    hostname: slurmdbd2
+    volumes:
+      - etc_munge2:/etc/munge2
+      - etc_slurm2:/opt/slurm/2/etc
+    expose:
+      - "6819"
+      - "22"
+    depends_on:
+      - mysql2
+
+  slurmctld2:
+    image: mmayer123/slurm-docker-cluster:${SLURM_VERSION2:-23.11.11-1}-${DIST:-jammy}
+    build:
+      context: .
+      dockerfile: Dockerfile.compile.multi
+      args:
+        SLURM_VERSION: ${SLURM_VERSION2:-23.11.11-1}
+        DIST: ${DIST:-jammy}
+        DISTNUM: ${DISTNUM:-2204}
+        CLUSTER: 2
+    command: ["slurmctld"]
+    hostname: slurmctld2
+    privileged: true 
+    volumes:
+      - etc_munge2:/etc/munge2
+      - etc_slurm2:/opt/slurm/2/etc
+      - home:/home
+    expose:
+      - "6817"
+      - "22"
+    depends_on:
+      - "slurmdbd2"
+
+
+  c21:
+    image: mmayer123/slurm-docker-cluster:${SLURM_VERSION2:-23.11.11-1}-${DIST:-jammy}
+    build:
+      context: .
+      dockerfile: Dockerfile.compile.multi
+      args:
+        SLURM_VERSION: ${SLURM_VERSION2:-23.11.11-1}
+        DIST: ${DIST:-jammy}
+        DISTNUM: ${DISTNUM:-2204}
+        CLUSTER: 2
+    command: ["slurmd"]
+    hostname: c21
+    privileged: true
+    volumes:
+      - etc_munge2:/etc/munge2
+      - etc_slurm2:/opt/slurm/2/etc
+      - home:/home
+    expose:
+      - "6818"
+      - "22"
+    depends_on:
+      - "slurmctld2"
+
+  c22:
+    image: mmayer123/slurm-docker-cluster:${SLURM_VERSION2:-23.11.11-1}-${DIST:-jammy}
+    build:
+      context: .
+      dockerfile: Dockerfile.compile.multi
+      args:
+        SLURM_VERSION: ${SLURM_VERSION2:-23.11.11-1}
+        DIST: ${DIST:-jammy}
+        DISTNUM: ${DISTNUM:-2204}
+        CLUSTER: 2
+    command: ["slurmd"]
+    hostname: c22
+    privileged: true
+    volumes:
+      - etc_munge2:/etc/munge2
+      - etc_slurm2:/opt/slurm/2/etc
+      - home:/home
+    expose:
+      - "6818"
+      - "22"
+    depends_on:
+      - "slurmctld2"
+
+
+  rstudio:
+    image: mmayer123/slurm-docker-cluster:${SLURM_VERSION1:-24.11.6-1}-${SLURM_VERSION2:-23.11.11-1}-${DIST:-jammy}
+    build:
+      context: .
+      dockerfile: Dockerfile.compile.multi.rstudio
+      args:
+        SLURM_VERSION1: ${SLURM_VERSION1:-24.11.6-1}
+        SLURM_VERSION2: ${SLURM_VERSION2:-23.11.11-1}
         DIST: ${DIST:-jammy}
         DISTNUM: ${DISTNUM:-2204}
     command: ["rstudio"]
     hostname: rstudio
     privileged: true
     volumes:
-      - etc_munge:/etc/munge
-      - etc_slurm:/etc/slurm
-      - slurm_jobdir:/data
-      - var_log_slurm:/var/log/slurm
-      - var_lib_rstudio_server:/var/lib/rstudio-server
-      - home:/home   
-      - ./rstudio/launcher.conf:/etc/rstudio/launcher.conf
-      - ./rstudio/launcher.slurm.conf:/etc/rstudio/launcher.slurm.conf
-      - ./rstudio/launcher.slurm.profiles.conf:/etc/rstudio/launcher.slurm.profiles.conf
-      - ./rstudio/rserver.conf:/etc/rstudio/rserver.conf
-      - ./rstudio/launcher.slurm.resources.conf:/etc/rstudio/launcher.slurm.resources.conf
-      - ./rstudio/jupyter.conf:/etc/rstudio/jupyter.conf
-    expose:
-      - "8787"
-      - "22"
-    ports:
-      - "${PWB_PORT:-8000}:8787"
-      - "${SSH_PORT:-1000}:22" 
-    depends_on:
-      - "slurmctld"
-      - "postgres"
-    environment:
-      RSP_LICENSE: ${RSP_LICENSE}
-
-
-  c1:
-    image: mmayer123/slurm-docker-cluster:${PWB_VERSION:-2025.05.2-513.pro15}-slurm-${SLURM_VERSION:-25.05.5-1}-${DIST:-jammy}
-    build:
-      context: .
-      dockerfile: Dockerfile.compile
-      args:
-        SLURM_VERSION: ${SLURM_VERSION:-25.05.5-1}
-        PWB_VERSION: ${PWB_VERSION:-2025.05.2-513.pro15}
-        LAUNCHER_VERSION: ${LAUNCHER_VERSION}
-        DIST: ${DIST:-jammy}
-        DISTNUM: ${DISTNUM:-2204}
-    command: ["slurmd"]
-    hostname: c1
-    privileged: true
-    volumes:
-      - etc_munge:/etc/munge
-      - etc_slurm:/etc/slurm
-      - slurm_jobdir:/data
-      - var_log_slurm:/var/log/slurm
-      - var_lib_rstudio_server:/var/lib/rstudio-server
+      - etc_munge1:/etc/munge1
+      - etc_munge2:/etc/munge2
+      - etc_slurm1:/opt/slurm/1/etc
+      - etc_slurm2:/opt/slurm/2/etc
       - home:/home
     expose:
       - "6818"
       - "22"
     depends_on:
-      - "slurmctld"
+      - "c11"
+      - "c21"
 
-  c2:
-    image: mmayer123/slurm-docker-cluster:${PWB_VERSION:-2025.05.2-513.pro15}-slurm-${SLURM_VERSION:-25.05.5-1}-${DIST:-jammy}
-    build:
-      context: .
-      dockerfile: Dockerfile.compile
-      args:
-        SLURM_VERSION: ${SLURM_VERSION:-25.05.5-1}
-        PWB_VERSION: ${PWB_VERSION:-2025.05.2-513.pro15}
-        LAUNCHER_VERSION: ${LAUNCHER_VERSION}
-        DIST: ${DIST:-jammy}
-        DISTNUM: ${DISTNUM:-2204}
-    command: ["slurmd"]
-    hostname: c2
-    privileged: true
-    volumes:
-      - etc_munge:/etc/munge
-      - etc_slurm:/etc/slurm
-      - slurm_jobdir:/data
-      - var_log_slurm:/var/log/slurm
-      - var_lib_rstudio_server:/var/lib/rstudio-server
-      - home:/home
-    expose:
-      - "6818"
-      - "22"
-    depends_on:
-      - "slurmctld"
 
 
 volumes:
-  etc_munge:
-  etc_slurm:
-  slurm_jobdir:
-  var_lib_mysql:
-  var_lib_postgres:
-  var_log_slurm:
+  etc_munge1:
+  etc_slurm1:
+  slurm_jobdir1:
+  var_lib_mysql1:
+  etc_munge2:
+  etc_slurm2:
+  slurm_jobdir2:
+  var_lib_mysql2:
   home:
-  var_lib_rstudio_server:
+  var_lib_postgres:

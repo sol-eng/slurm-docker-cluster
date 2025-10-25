@@ -3,7 +3,13 @@
 if [ "$1" = "slurmdbd" ]
 then
     echo "---> Starting the MUNGE Authentication service (munged) ..."
-    /etc/init.d/munge start  
+    mkdir -p /var/log/mungeXXX /run/munge
+    chown 105 /var/log/mungeXXX /etc/mungeXXX/munge.key /run/munge
+    chmod 0700 /var/log/mungeXXX
+    sudo -u munge munged --key-file=/etc/mungeXXX/munge.key \
+        --log-file=/var/log/mungeXXX/munged.log \
+        --pid-file=/run/munge/munged.pid.XXX \
+        --socket=/run/munge/munge.socket.XXX
 
     echo "---> Starting sshd ..."
     /etc/init.d/ssh start
@@ -12,7 +18,7 @@ then
 
     echo "---> Starting the Slurm Database Daemon (slurmdbd) ..."
     {
-        . /etc/slurm/slurmdbd.conf
+        . /opt/slurm/XXX/etc/slurmdbd.conf
         until echo "SELECT 1" | mysql -h $StorageHost -u$StorageUser -p$StoragePass 2>&1 > /dev/null
         do
             echo "-- Waiting for database to become active ..."
@@ -21,10 +27,10 @@ then
     }
     echo "-- Database is now active ..."
 
-    chmod 0600 /etc/slurm/slurmdbd.conf
-    chown slurm /etc/slurm/slurmdbd.conf
+    chmod 0600 /opt/slurm/XXX/etc/slurmdbd.conf
+    chown slurm /opt/slurm/XXX/etc/slurmdbd.conf
 
-    sudo -u slurm /usr/sbin/slurmdbd
+    sudo -u slurm /opt/slurm/XXX/sbin/slurmdbd
 
     # Loop indefinitely
     while true; do sleep 20; done
@@ -33,7 +39,13 @@ fi
 if [ "$1" = "slurmctld" ]
 then
     echo "---> Starting the MUNGE Authentication service (munged) ..."
-    /etc/init.d/munge start 
+    mkdir -p /var/log/mungeXXX /run/munge
+    chown 105 /var/log/mungeXXX /etc/mungeXXX/munge.key /run/munge
+    chmod 0700 /var/log/mungeXXX
+    sudo -u munge munged --key-file=/etc/mungeXXX/munge.key \
+        --log-file=/var/log/mungeXXX/munged.log \
+        --pid-file=/run/munge/munged.pid.XXX \
+        --socket=/run/munge/munge.socket.XXX
 
     echo "---> Starting sshd ..."
     /etc/init.d/ssh start
@@ -41,7 +53,7 @@ then
     echo "rstudio ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/rstudio
 
     echo "---> Waiting for slurmdbd to become active before starting slurmctld ..."
-    until 2>/dev/null >/dev/tcp/slurmdbd/6819
+    until 2>/dev/null >/dev/tcp/slurmdbdXXX/6819
     do
         echo "-- slurmdbd is not available.  Sleeping ..."
         sleep 2
@@ -49,7 +61,7 @@ then
     echo "-- slurmdbd is now active ..."
 
     echo "---> Starting the Slurm Controller Daemon (slurmctld) ..."
-    sudo -u slurm /usr/sbin/slurmctld
+    sudo -u slurm /opt/slurm/XXX/sbin/slurmctld
 
     # Loop indefinitely
     while true; do sleep 20; done
@@ -59,7 +71,17 @@ fi
 if [ "$1" = "rstudio" ]
 then
     echo "---> Starting the MUNGE Authentication service (munged) ..."
-    /etc/init.d/munge start 
+    mkdir -p /var/log/munge1 /var/log/munge2 /run/munge
+    chown 105 /var/log/munge1 /var/log/munge2 /etc/munge1/munge.key /etc/munge2/munge.key /run/munge
+    chmod 0700 /var/log/munge1 /var/log/munge2
+    sudo -u munge munged --key-file=/etc/munge1/munge.key \
+        --log-file=/var/log/munge1/munged.log \
+        --pid-file=/run/munge/munged.pid.1 \
+        --socket=/run/munge/munge.socket.1
+    sudo -u munge munged --key-file=/etc/munge2/munge.key \
+        --log-file=/var/log/munge2/munged.log \
+        --pid-file=/run/munge/munged.pid.2 \
+        --socket=/run/munge/munge.socket.2
 
     echo "---> Starting sshd ..."
     /etc/init.d/ssh start
@@ -108,7 +130,7 @@ then
 
     echo "---> Starting RSW (launcher + server) ..."
 
-    until 2>/dev/null >/dev/tcp/slurmctld/6817
+    until 2>/dev/null >/dev/tcp/slurmctldXXX/6817
     do
         echo "-- slurmctld is not available.  Sleeping ..."
         sleep 2
@@ -135,8 +157,13 @@ fi
 if [ "$1" = "slurmd" ]
 then
     echo "---> Starting the MUNGE Authentication service (munged) ..."
-    #gosu munge /usr/sbin/munged
-    /etc/init.d/munge start 
+    mkdir -p /var/log/mungeXXX /run/munge
+    chown 105 /var/log/mungeXXX /etc/mungeXXX/munge.key /run/munge
+    chmod 0700 /var/log/mungeXXX
+    sudo -u munge munged --key-file=/etc/mungeXXX/munge.key \
+        --log-file=/var/log/mungeXXX/munged.log \
+        --pid-file=/run/munge/munged.pid.XXX \
+        --socket=/run/munge/munge.socket.XXX
 
     echo "---> Starting sshd ..."
     /etc/init.d/ssh start
@@ -145,7 +172,7 @@ then
 
     echo "---> Waiting for slurmctld to become active before starting slurmd..."
 
-    until 2>/dev/null >/dev/tcp/slurmctld/6817
+    until 2>/dev/null >/dev/tcp/slurmctldXXX/6817
     do
         echo "-- slurmctld is not available.  Sleeping ..."
         sleep 2
@@ -153,7 +180,7 @@ then
     echo "-- slurmctld is now active ..."
 
     echo "---> Starting the Slurm Node Daemon (slurmd) ..."
-    /usr/sbin/slurmd
+    /opt/slurm/XXX/sbin/slurmd
 
     # Loop indefinitely
     while true; do sleep 20; done

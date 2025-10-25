@@ -1,0 +1,173 @@
+ARG DIST="focal"
+ARG DISTNUM="2004"
+
+FROM ubuntu:${DIST}
+
+LABEL org.opencontainers.image.source="https://github.com/michaelmayer2/slurm-docker-cluster" \
+      org.opencontainers.image.title="slurm-docker-cluster" \
+      org.opencontainers.image.description="Slurm Docker cluster on Ubuntu ${DIST} LTS" \
+      org.label-schema.docker.cmd="docker-compose up -d" \
+      maintainer="Michael Mayer"
+
+ARG GOSU_VERSION=1.11
+ARG R_VERSIONS="3.6.3 4.3.2 4.4.2"
+ARG PROXY
+ARG DIST="focal"
+ARG DISTNUM="2004"
+
+
+# Install and configure R and RStudio Workbench
+
+## Install SLURM
+
+### Install prerequisites/dependencies
+
+RUN /bin/bash -c "set -x \
+    && groupadd -r --gid=105 munge \
+    && useradd -r -s /bin/bash -g munge --uid=105 munge"
+
+RUN set -ex \
+    && apt-get update \
+    && apt-get -y install \
+       wget \
+       bzip2 \
+       perl \
+       gcc-9 \
+       g++-9 \
+       gcc \
+       g++ \
+       git \
+       gnupg \
+       make \
+       munge \
+       libmunge-dev \
+       python-is-python3 \
+       python3.8-dev \
+       python3-pip \
+       cython3 \
+       mariadb-server \
+       mariadb-client \
+       libmariadbd-dev \
+       psmisc \
+       bash-completion \
+       vim \
+       python3-nose \
+       #libdbus-1-dev \
+    && apt clean all \
+    && rm -rf /var/cache/apt
+
+RUN set -ex \
+    && apt-get update \
+    && apt-get -y install libcgroup-dev \
+    && apt clean all \
+    && rm -rf /var/cache/apt
+
+ARG SLURM_VERSION1
+
+ENV SLURM_VERSION=${SLURM_VERSION1}
+ENV CLUSTER=1
+
+## Build SLURM from source and add folders and permissions
+RUN mkdir -p /opt/slurm/${CLUSTER}/etc && mkdir -p /tmp/build && cd /tmp/build \
+    && bash -c "git clone --depth 1 -b slurm-\${SLURM_VERSION//./-} https://github.com/SchedMD/slurm.git" \
+    && cd slurm \
+    && echo "Configuring SLURM ${SLURM_VERSION}" \
+    && bash -c "./configure --enable-debug --prefix=/opt/slurm/${CLUSTER} --sysconfdir=/opt/slurm/${CLUSTER}/etc --with-mysql_config=/usr/bin  --libdir=/opt/slurm/${CLUSTER}/lib64 >& /opt/slurm/${CLUSTER}/etc/.config.log" \
+    && echo "Building SLURM ${SLURM_VERSION}" \
+    && bash -c "make -j 8 >& /opt/slurm/${CLUSTER}/etc/.build.log" \
+    && echo "Installing SLURM ${SLURM_VERSION}" \
+    && bash -c "make -j 8 install >& /opt/slurm/${CLUSTER}/etc/.install.log" \
+    && install -D -m644 contribs/slurm_completion_help/slurm_completion.sh /etc/profile.d/slurm_completion.sh \
+    && cd .. \
+    && rm -rf slurm \
+    && groupadd -r --gid=995 slurm \
+    && useradd -r -g slurm --uid=995 slurm \
+    && mkdir -p /etc/sysconfig/slurm \
+        /var/spool/slurmd \
+        /var/run/slurmd \
+        /var/run/slurmdbd \
+        /var/lib/slurmd \
+        /var/log/slurm \
+        /data \
+    && touch /var/lib/slurmd/node_state \
+        /var/lib/slurmd/front_end_state \
+        /var/lib/slurmd/job_state \
+        /var/lib/slurmd/resv_state \
+        /var/lib/slurmd/trigger_state \
+        /var/lib/slurmd/assoc_mgr_state \
+        /var/lib/slurmd/assoc_usage \
+        /var/lib/slurmd/qos_usage \
+        /var/lib/slurmd/fed_mgr_state \
+    && chown -R slurm:slurm /var/*/slurm* 
+
+
+ARG SLURM_VERSION2
+
+ENV SLURM_VERSION=${SLURM_VERSION2}
+ENV CLUSTER=2
+
+## Build SLURM from source and add folders and permissions
+RUN mkdir -p /opt/slurm/${CLUSTER}/etc && mkdir -p /tmp/build && cd /tmp/build \
+    && bash -c "git clone --depth 1 -b slurm-\${SLURM_VERSION//./-} https://github.com/SchedMD/slurm.git" \
+    && cd slurm \
+    && echo "Configuring SLURM ${SLURM_VERSION}" \
+    && bash -c "./configure --enable-debug --prefix=/opt/slurm/${CLUSTER} --sysconfdir=/opt/slurm/${CLUSTER}/etc --with-mysql_config=/usr/bin  --libdir=/opt/slurm/${CLUSTER}/lib64 >& /opt/slurm/${CLUSTER}/etc/.config.log" \
+    && echo "Building SLURM ${SLURM_VERSION}" \
+    && bash -c "make -j 8 >& /opt/slurm/${CLUSTER}/etc/.build.log" \
+    && echo "Installing SLURM ${SLURM_VERSION}" \
+    && bash -c "make -j 8 install >& /opt/slurm/${CLUSTER}/etc/.install.log" \
+    && install -D -m644 contribs/slurm_completion_help/slurm_completion.sh /etc/profile.d/slurm_completion.sh \
+    && cd .. \
+    && rm -rf slurm \
+    && mkdir -p /etc/sysconfig/slurm \
+        /var/spool/slurmd \
+        /var/run/slurmd \
+        /var/run/slurmdbd \
+        /var/lib/slurmd \
+        /var/log/slurm \
+        /data \
+    && touch /var/lib/slurmd/node_state \
+        /var/lib/slurmd/front_end_state \
+        /var/lib/slurmd/job_state \
+        /var/lib/slurmd/resv_state \
+        /var/lib/slurmd/trigger_state \
+        /var/lib/slurmd/assoc_mgr_state \
+        /var/lib/slurmd/assoc_usage \
+        /var/lib/slurmd/qos_usage \
+        /var/lib/slurmd/fed_mgr_state \
+    && chown -R slurm:slurm /var/*/slurm* 
+
+
+RUN apt-get install -y openssh-server
+
+COPY rstudio/launcher.slurm.resources.conf /etc/rstudio
+COPY scripts/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+
+## Add test user rstudio
+
+RUN groupadd rstudio -g 2048 \
+        && useradd -m rstudio -s /bin/bash -u 2048 -g 2048\
+        && bash -c "echo -e \"BuildBattleMSP\\nBuildBattleMSP\" | passwd rstudio"
+
+COPY ssh/pubkey.pub /home/rstudio/.ssh/authorized_keys
+RUN chown -R rstudio:rstudio /home/rstudio/.ssh
+
+
+
+## Configure a mail client and add a couple of nice to have tools
+
+RUN mkdir -p /etc/postfix
+
+COPY rstudio/main.cf /etc/postfix/main.cf
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN set -ex \
+    && apt-get update \
+    && apt-get -y install \
+       sudo net-tools iputils-ping postfix mailutils \
+    && apt clean all \
+    && rm -rf /var/cache/apt
+
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+
+CMD ["slurmdbd"]

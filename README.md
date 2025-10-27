@@ -165,32 +165,12 @@ Eventually in `slurm.conf` you then can reference the non-default munge socket
 AuthInfo=socket=/run/munge/munge.socket.1
 ```
 
-In order for this to work properly, you will need to patch SLURM with the below [patch](slurm/munge.patch):
+The same also needs to be added to `AccountingStoragePass`
 
 ```bash
---- a/src/interfaces/auth.c
-+++ b/src/interfaces/auth.c
-@@ -335,14 +335,18 @@ void *auth_g_create(int index, char *auth_info, uid_t r_uid,
-                    void *data, int dlen)
- {
-        cred_wrapper_t *cred;
-+       char *info = auth_info;
- 
-        xassert(g_context_num > 0);
- 
-        if (r_uid == SLURM_AUTH_NOBODY)
-                return NULL;
- 
-+       if (!info)
-+        info = slurm_conf.authinfo;
-+
-        slurm_rwlock_rdlock(&context_lock);
--       cred = (*(ops[index].create))(auth_info, r_uid, data, dlen);
-+       cred = (*(ops[index].create))(info, r_uid, data, dlen);
-        slurm_rwlock_unlock(&context_lock);
- 
-        if (cred)
+AccountingStoragePass=/run/munge/munge.socket.1
 ```
+
 
 ## SLURM setup
 

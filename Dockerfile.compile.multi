@@ -72,7 +72,7 @@ COPY slurm/munge.patch /
 RUN mkdir -p /opt/slurm/${CLUSTER}/etc && mkdir -p /tmp/build && cd /tmp/build \
     && bash -c "git clone --depth 1 -b slurm-\${SLURM_VERSION//./-} https://github.com/SchedMD/slurm.git" \
     && cd slurm \
-    && patch -p1 < /munge.patch \
+#    && patch -p1 < /munge.patch \
     && echo "Configuring SLURM ${SLURM_VERSION}" \
     && bash -c "./configure --enable-debug --prefix=/opt/slurm/${CLUSTER} --sysconfdir=/opt/slurm/${CLUSTER}/etc --with-mysql_config=/usr/bin  --libdir=/opt/slurm/${CLUSTER}/lib64 >& /opt/slurm/${CLUSTER}/etc/.config.log" \
     && echo "Building SLURM ${SLURM_VERSION}" \

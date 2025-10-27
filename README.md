@@ -41,11 +41,11 @@ The compose file will create the following named volumes:
 
 The dependency is shown in the image below. As you can see, there is two distinct and independent clusters that all depend on the rstudio container where Posit Workbench runs. 
 
-![](img/docker-compose-full.png)
+![](img/docker-compose-simple.png)
 
 A more detailed view contains the mounted volumes as well. 
 
-![](img/docker-compose-simple.png)
+![](img/docker-compose-full.png)
 
 
 ## Building the Docker Image

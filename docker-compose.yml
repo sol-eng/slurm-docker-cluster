@@ -1,6 +1,6 @@
+version: "3.2"
+
 services:
-
-
   postgres:
     image: postgres:14.5
     hostname: postgres
@@ -261,7 +261,9 @@ services:
       RSP_LICENSE: ${RSP_LICENSE}
     depends_on:
       - "c11"
+      - "c12" 
       - "c21"
+      - "c22"
       - "postgres"
 
 

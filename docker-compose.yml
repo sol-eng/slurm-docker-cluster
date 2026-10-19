@@ -2,13 +2,14 @@ version: "2.2"
 
 services:
   mysql:
-    image: mysql:5.7
+    # Slurm 26.05 needs REGEXP_REPLACE (MySQL 8.0+/MariaDB), MySQL 5.7 is no longer sufficient
+    image: mariadb:11.8
     hostname: mysql
     environment:
-      MYSQL_RANDOM_ROOT_PASSWORD: "yes"
-      MYSQL_DATABASE: slurm_acct_db
-      MYSQL_USER: slurm
-      MYSQL_PASSWORD: password
+      MARIADB_RANDOM_ROOT_PASSWORD: "yes"
+      MARIADB_DATABASE: slurm_acct_db
+      MARIADB_USER: slurm
+      MARIADB_PASSWORD: password
     volumes:
       - var_lib_mysql:/var/lib/mysql
 
@@ -25,16 +26,16 @@ services:
       - "5432"
 
   slurmdbd:
-    image: mmayer123/slurm-docker-cluster:${PWB_VERSION:-2025.05.2-513.pro15}-slurm-${SLURM_VERSION:-25.05.5-1}-${DIST:-jammy}
+    image: mmayer123/slurm-docker-cluster:${PWB_VERSION:-2026.10.0-233.pro1}-slurm-${SLURM_VERSION:-26.05.5-1}-${DIST:-resolute}
     build:
       context: .
       dockerfile: Dockerfile.compile 
       args:
-        SLURM_VERSION: ${SLURM_VERSION:-25.05.5-1}
-        PWB_VERSION: ${PWB_VERSION:-2025.05.2-513.pro15}
+        SLURM_VERSION: ${SLURM_VERSION:-26.05.5-1}
+        PWB_VERSION: ${PWB_VERSION:-2026.10.0-233.pro1}
         LAUNCHER_VERSION: ${LAUNCHER_VERSION}
-        DIST: ${DIST:-jammy}
-        DISTNUM: ${DISTNUM:-2204}
+        DIST: ${DIST:-resolute}
+        DISTNUM: ${DISTNUM:-2604}
     command: ["slurmdbd"]
     hostname: slurmdbd
     volumes:
@@ -48,16 +49,16 @@ services:
       - mysql
 
   slurmctld:
-    image: mmayer123/slurm-docker-cluster:${PWB_VERSION:-2025.05.2-513.pro15}-slurm-${SLURM_VERSION:-25.05.5-1}-${DIST:-jammy} 
+    image: mmayer123/slurm-docker-cluster:${PWB_VERSION:-2026.10.0-233.pro1}-slurm-${SLURM_VERSION:-26.05.5-1}-${DIST:-resolute} 
     build:
       context: .
       dockerfile: Dockerfile.compile
       args:
-        SLURM_VERSION: ${SLURM_VERSION:-25.05.5-1}
-        PWB_VERSION: ${PWB_VERSION:-2025.05.2-513.pro15}
+        SLURM_VERSION: ${SLURM_VERSION:-26.05.5-1}
+        PWB_VERSION: ${PWB_VERSION:-2026.10.0-233.pro1}
         LAUNCHER_VERSION: ${LAUNCHER_VERSION}
-        DIST: ${DIST:-jammy}
-        DISTNUM: ${DISTNUM:-2204}
+        DIST: ${DIST:-resolute}
+        DISTNUM: ${DISTNUM:-2604}
     command: ["slurmctld"]
     hostname: slurmctld
     privileged: true 
@@ -74,16 +75,16 @@ services:
       - "slurmdbd"
 
   rstudio:
-    image: mmayer123/slurm-docker-cluster:${PWB_VERSION:-2025.05.2-513.pro15}-slurm-${SLURM_VERSION:-25.05.5-1}-${DIST:-jammy}
+    image: mmayer123/slurm-docker-cluster:${PWB_VERSION:-2026.10.0-233.pro1}-slurm-${SLURM_VERSION:-26.05.5-1}-${DIST:-resolute}
     build:
       context: .
       dockerfile: Dockerfile.compile
       args:
-        SLURM_VERSION: ${SLURM_VERSION:-25.05.5-1}
-        PWB_VERSION: ${PWB_VERSION:-2025.05.2-513.pro15}
+        SLURM_VERSION: ${SLURM_VERSION:-26.05.5-1}
+        PWB_VERSION: ${PWB_VERSION:-2026.10.0-233.pro1}
         LAUNCHER_VERSION: ${LAUNCHER_VERSION}
-        DIST: ${DIST:-jammy}
-        DISTNUM: ${DISTNUM:-2204}
+        DIST: ${DIST:-resolute}
+        DISTNUM: ${DISTNUM:-2604}
     command: ["rstudio"]
     hostname: rstudio
     privileged: true
@@ -114,16 +115,16 @@ services:
 
 
   c1:
-    image: mmayer123/slurm-docker-cluster:${PWB_VERSION:-2025.05.2-513.pro15}-slurm-${SLURM_VERSION:-25.05.5-1}-${DIST:-jammy}
+    image: mmayer123/slurm-docker-cluster:${PWB_VERSION:-2026.10.0-233.pro1}-slurm-${SLURM_VERSION:-26.05.5-1}-${DIST:-resolute}
     build:
       context: .
       dockerfile: Dockerfile.compile
       args:
-        SLURM_VERSION: ${SLURM_VERSION:-25.05.5-1}
-        PWB_VERSION: ${PWB_VERSION:-2025.05.2-513.pro15}
+        SLURM_VERSION: ${SLURM_VERSION:-26.05.5-1}
+        PWB_VERSION: ${PWB_VERSION:-2026.10.0-233.pro1}
         LAUNCHER_VERSION: ${LAUNCHER_VERSION}
-        DIST: ${DIST:-jammy}
-        DISTNUM: ${DISTNUM:-2204}
+        DIST: ${DIST:-resolute}
+        DISTNUM: ${DISTNUM:-2604}
     command: ["slurmd"]
     hostname: c1
     privileged: true
@@ -141,16 +142,16 @@ services:
       - "slurmctld"
 
   c2:
-    image: mmayer123/slurm-docker-cluster:${PWB_VERSION:-2025.05.2-513.pro15}-slurm-${SLURM_VERSION:-25.05.5-1}-${DIST:-jammy}
+    image: mmayer123/slurm-docker-cluster:${PWB_VERSION:-2026.10.0-233.pro1}-slurm-${SLURM_VERSION:-26.05.5-1}-${DIST:-resolute}
     build:
       context: .
       dockerfile: Dockerfile.compile
       args:
-        SLURM_VERSION: ${SLURM_VERSION:-25.05.5-1}
-        PWB_VERSION: ${PWB_VERSION:-2025.05.2-513.pro15}
+        SLURM_VERSION: ${SLURM_VERSION:-26.05.5-1}
+        PWB_VERSION: ${PWB_VERSION:-2026.10.0-233.pro1}
         LAUNCHER_VERSION: ${LAUNCHER_VERSION}
-        DIST: ${DIST:-jammy}
-        DISTNUM: ${DISTNUM:-2204}
+        DIST: ${DIST:-resolute}
+        DISTNUM: ${DISTNUM:-2604}
     command: ["slurmd"]
     hostname: c2
     privileged: true

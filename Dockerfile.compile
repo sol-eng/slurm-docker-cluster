@@ -1,5 +1,5 @@
-ARG DIST="focal"
-ARG DISTNUM="2004"
+ARG DIST="resolute"
+ARG DISTNUM="2604"
 
 FROM ubuntu:${DIST}
 
@@ -10,10 +10,10 @@ LABEL org.opencontainers.image.source="https://github.com/michaelmayer2/slurm-do
       maintainer="Michael Mayer"
 
 ARG GOSU_VERSION=1.11
-ARG R_VERSIONS="3.6.3 4.3.2 4.4.2"
+ARG R_VERSIONS="4.4.3 4.5.3 4.6.1"
 ARG PROXY
-ARG DIST="focal"
-ARG DISTNUM="2004"
+ARG DIST="resolute"
+ARG DISTNUM="2604"
 
 
 # Install and configure R and RStudio Workbench
@@ -34,9 +34,11 @@ RUN apt-get update -y && \
         rm -rf /var/cache/apt
    
 ARG PWB_VERSION
+# Workbench packages are built for jammy and installed on newer Ubuntu releases as well
+ARG PWB_DIST="jammy"
 RUN apt-get update -y && groupadd  -g 999 rstudio-server && \ 
    	useradd -g 999 -m -u 999 -s /bin/bash rstudio-server && \
-        curl -O https://s3.amazonaws.com/rstudio-ide-build/server/${DIST}/amd64/rstudio-workbench-${PWB_VERSION}-amd64.deb && \
+        curl -O https://s3.amazonaws.com/rstudio-ide-build/server/${PWB_DIST}/amd64/rstudio-workbench-${PWB_VERSION}-amd64.deb && \
 	gdebi -n rstudio-workbench-${PWB_VERSION}-amd64.deb && \
 	rm -f rstudio-workbench-${PWB_VERSION}-amd64.deb && \
     	apt clean all && \
@@ -81,28 +83,29 @@ RUN openssl rsa -in /etc/rstudio/launcher.pem \
 
 ## Add VSCode and Jupyter/Python 
 
-### Install Python  -------------------------------------------------------------#
+### Install Python via uv (https://docs.posit.co/resources/install-python-uv.html) ---#
 
-ARG PYTHON_VERSION=3.11.6
-RUN curl -O https://cdn.rstudio.com/python/ubuntu-${DISTNUM}/pkgs/python-${PYTHON_VERSION}_1_amd64.deb && \
-    apt-get update && gdebi -n python-${PYTHON_VERSION}_1_amd64.deb && apt clean all && \
-    rm -rf /var/cache/apt && rm -f python-${PYTHON_VERSION}_1_amd64.deb
+ARG PYTHON_VERSIONS="3.13.16 3.14.8 3.15.0"
+ARG JUPYTER_PYTHON_VERSION=3.15.0
+RUN curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local/bin sh && \
+	IFS=" "; for PYTHON_VERSION in $PYTHON_VERSIONS ; \
+	do \
+		/usr/local/bin/uv python install ${PYTHON_VERSION} --install-dir=/opt/python && \
+		ln -s /opt/python/cpython-${PYTHON_VERSION}-* /opt/python/${PYTHON_VERSION} && \
+		/opt/python/${PYTHON_VERSION}/bin/python -m pip install ipykernel \
+			--break-system-packages --root-user-action=ignore && \
+		/opt/python/${PYTHON_VERSION}/bin/python -m ipykernel install \
+			--name py${PYTHON_VERSION} --display-name "Python ${PYTHON_VERSION}" || exit 1 ; \
+	done
 
-RUN /opt/python/${PYTHON_VERSION}/bin/pip install --upgrade pip 
+### Install Jupyter and the Workbench extension ---------------------------------#
 
-RUN /opt/python/${PYTHON_VERSION}/bin/pip install \
-    jupyter \
+RUN /opt/python/${JUPYTER_PYTHON_VERSION}/bin/python -m pip install \
     jupyterlab \
-    workbench_jupyterlab \
-    rsp_jupyter \
-    rsconnect_jupyter \
-    rsconnect_python 
-
-RUN /opt/python/${PYTHON_VERSION}/bin/jupyter-nbextension install --sys-prefix --py rsp_jupyter && \
-    /opt/python/${PYTHON_VERSION}/bin/jupyter-nbextension enable --sys-prefix --py rsp_jupyter && \
-    /opt/python/${PYTHON_VERSION}/bin/jupyter-nbextension install --sys-prefix --py rsconnect_jupyter && \
-    /opt/python/${PYTHON_VERSION}/bin/jupyter-nbextension enable --sys-prefix --py rsconnect_jupyter && \
-    /opt/python/${PYTHON_VERSION}/bin/jupyter-serverextension enable --sys-prefix --py rsconnect_jupyter
+    notebook \
+    pwb_jupyterlab \
+    rsconnect_python \
+    --break-system-packages --root-user-action=ignore
 
 
 #### Install VSCode code-server --------------------------------------------------#
@@ -110,7 +113,9 @@ RUN /opt/python/${PYTHON_VERSION}/bin/jupyter-nbextension install --sys-prefix -
 #COPY rstudio/vscode.conf /etc/rstudio/vscode.conf
 #COPY rstudio/vscode-user-settings.json  /etc/rstudio/vscode-user-settings.json
 # Install VSCode based on the PWB version. 
-RUN /bin/bash -c "if ( rstudio-server | grep configure-vs-code ); then rstudio-server configure-vs-code ; rstudio-server install-vs-code-ext; else rstudio-server install-vs-code /opt/code-server/; fi"
+RUN /bin/bash -c "if ( rstudio-server | grep -q configure-vs-code ); then rstudio-server configure-vs-code ; rstudio-server install-vs-code-ext; \
+    elif ( rstudio-server | grep -q install-vs-code-ext ); then rstudio-server install-vs-code-ext; \
+    else rstudio-server install-vs-code /opt/code-server/; fi"
 
 ## Install SLURM
 
@@ -118,7 +123,9 @@ RUN /bin/bash -c "if ( rstudio-server | grep configure-vs-code ); then rstudio-s
 
 RUN /bin/bash -c "set -x \
     && groupadd -r --gid=105 munge \
-    && useradd -r -s /bin/bash -g munge --uid=105 munge"
+    && useradd -r -s /bin/bash -g munge --uid=105 munge \
+    && groupadd -r --gid=995 slurm \
+    && useradd -r -g slurm --uid=995 slurm"
 
 RUN set -ex \
     && apt-get update \
@@ -126,26 +133,25 @@ RUN set -ex \
        wget \
        bzip2 \
        perl \
-       gcc-9 \
-       g++-9 \
        gcc \
        g++ \
        git \
        gnupg \
        make \
+       pkgconf \
        munge \
        libmunge-dev \
        python-is-python3 \
-       python3.8-dev \
+       python3-dev \
        python3-pip \
        cython3 \
        mariadb-server \
        mariadb-client \
        libmariadbd-dev \
+       libmariadb-dev-compat \
        psmisc \
        bash-completion \
        vim \
-       python3-nose \
        #libdbus-1-dev \
     && apt clean all \
     && rm -rf /var/cache/apt
@@ -175,8 +181,6 @@ RUN mkdir -p /etc/slurm && mkdir -p /tmp/build && cd /tmp/build \
     && install -D -m644 contribs/slurm_completion_help/slurm_completion.sh /etc/profile.d/slurm_completion.sh \
     && cd .. \
     && rm -rf slurm \
-    && groupadd -r --gid=995 slurm \
-    && useradd -r -g slurm --uid=995 slurm \
     && mkdir -p /etc/sysconfig/slurm \
         /var/spool/slurmd \
         /var/run/slurmd \

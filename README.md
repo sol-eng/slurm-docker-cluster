@@ -46,15 +46,15 @@ The setup uses one single docker image named `slurm-docker-cluster`. You can bui
 ```console
 docker-compose build 
 ```
-which will build the `slurm-docker-cluster` using default values for the versions of RStudio Workbench (2024.09.0+375.pro3) and SLURM (23.11.3) and for Ubuntu 22.04 LTS (Focal).
+which will build the `slurm-docker-cluster` using default values for the versions of Posit Workbench (2026.10.0-233.pro1) and SLURM (26.05.5) and for Ubuntu 26.04 LTS (Resolute). The image contains R 4.4.3, 4.5.3 and 4.6.1 and Python 3.13.16, 3.14.8 and 3.15.0 (installed via [uv](https://docs.posit.co/resources/install-python-uv.html)), with Jupyter running on Python 3.15.0.
 
 If you wanted to use a different Posit Workbench and SLURM version (or a different Ubuntu LTS version), you can set the environment variables `PWB_VERSION`, `SLURM_VERSION`, `DIST` and `DISTNUM`to your desired Workbench and SLURM version. e.g. 
 
 ```console
-export PWB_VERSION="2023.09.0-daily-203.pro2"
-export SLURM_VERSION="23.02.3-1" 
-export DIST="jammy"
-export DISTNUM="2204"
+export PWB_VERSION="2026.10.0-233.pro1"
+export SLURM_VERSION="26.05.5-1"
+export DIST="resolute"
+export DISTNUM="2604"
 ```                                                  
 
 
